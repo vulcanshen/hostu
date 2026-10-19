@@ -1,7 +1,7 @@
 # hostu 開發者備忘
 
 用 profile 切換 hosts 檔的 TUI，遵循 [terminu design principle](https://github.com/vulcanshen/terminu)（tdp v0.8.2），用
-terminu-go v0.2.0 做。
+terminu-go v0.2.1 做。
 
 ## 運作方式
 
@@ -34,6 +34,8 @@ terminu-go v0.2.0 做。
 - **最低尺寸 80×24**（tdp L1 可以調低）：兩個 panel 與每個 popup 在 24 列都放得下。
 - **statusbar 的路徑最多佔三分之一寬**，太長從前面截：後面的 `active` 與 `hosts file differs` 一定看得到，寬度只跟終端機的寬有關
   （tdp L2）。
+- **長欄標 `Shrink`**（tdp v0.8.2 layout/panel）：profile 的名稱、domain、位址是長值，分剩下的寬度、太長截短；domain 數是短值，照最寬的
+  值不縮。窄的時候先收位址那一欄、名稱與 domain 永遠留著。
 - **profile 名稱不分大小寫不能重複**、domain 在同一個 profile 裡不分大小寫不能重複：hosts 檔的名稱不分大小寫。
 
 ## 已否決，不要重提
@@ -47,7 +49,6 @@ terminu-go v0.2.0 做。
 - Windows 的寫入（`gsudo`／`sudo` 加 PowerShell）只有單元測試換掉了 exec，沒有在 Windows 上跑過；`make check` 照 Windows vet 一次。
 - 不監看 hosts 檔：啟動時與寫完之後才讀，別的程式改了要重開 hostu 或再寫一次才看得到。
 - macOS 的 DNS 快取通常會自己跟上 hosts 檔；跟不上時要自己清（`sudo killall -HUP mDNSResponder`），hostu 不做。
-- terminu-go v0.2.0 實作 tdp v0.8.1：v0.8.2 改的清單欄寬（長欄先截短、短欄不縮）要等 terminu-go 跟上。
 
 ## 偏離 tdp
 

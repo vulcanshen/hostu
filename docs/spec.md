@@ -1,7 +1,7 @@
 # hostu 規格
 
-照 terminu design（tdp v0.8.2）用 terminu-go v0.2.0 做。畫面、按鍵、外框、顏色、popup 的開關這些 tdp 已經規定的不寫在這裡，
-照 tdp 做。terminu-go v0.2.0 實作的是 tdp v0.8.1：v0.8.2 改的清單欄寬（長欄先截短、短欄不縮，layout/panel）要等 terminu-go 跟上。
+照 terminu design（tdp v0.8.2）用 terminu-go v0.2.1 做。畫面、按鍵、外框、顏色、popup 的開關這些 tdp 已經規定的不寫在這裡，
+照 tdp 做。
 
 ## 一句話
 

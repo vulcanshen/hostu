@@ -95,12 +95,12 @@ func newHostu(env Env) *hostu {
 	h.load()
 
 	h.profiles = &terminu.List{
-		Columns:   []terminu.Column{{Title: "Name"}, {Title: "Domains", Number: true, Drop: 1}},
+		Columns:   []terminu.Column{{Title: "Name", Shrink: true}, {Title: "Domains", Number: true, Drop: 1}},
 		EmptyFact: "No profiles yet",
 		EmptyHint: "Press [n] to make one, [i] to read the hosts file into one, or [Space] to see what you can do here",
 		OnMove:    func(terminu.Row) tea.Cmd { h.showDomains(); return nil },
 	}
-	h.domains = &terminu.List{Columns: []terminu.Column{{Title: "Domain"}, {Title: "Addresses", Drop: 1}}}
+	h.domains = &terminu.List{Columns: []terminu.Column{{Title: "Domain", Shrink: true}, {Title: "Addresses", Shrink: true, Drop: 1}}}
 	h.dp = &terminu.Panel{Label: "Domains", Body: h.domains, Actions: h.domainActions()}
 	h.pp = &terminu.Panel{Label: "Profiles", Body: h.profiles, Actions: h.profileActions(), Details: h.dp}
 	h.a.AddScreen(&terminu.Screen{Name: "Profiles", Panels: []*terminu.Panel{h.pp, h.dp},

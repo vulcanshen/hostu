@@ -455,3 +455,18 @@ func TestSudoAsksInATerminal(t *testing.T) {
 	}
 	hs.contains("home is in " + hs.env.Hosts + " now")
 }
+
+// A long name is cut and the short columns keep their width (layout/panel):
+// the count of domains stays whole.
+func TestLongNameIsCut(t *testing.T) {
+	t.Parallel()
+	hs := start(t, sandbox(t, "active: default\nprofiles:\n  - name: default\n  - name: the client site in the north building\n    domains:\n      - domain: erp.client.lan\n        addresses: [172.16.8.10]\n"), 80, 24)
+	hs.contains("NAME", "DOMAINS", "the client…")
+	hs.lacks("north building")
+	for _, l := range hs.frame() {
+		if strings.Contains(l, "the client…") && !strings.Contains(l, " 1 ") {
+			t.Fatalf("the count is not whole: %q", l)
+		}
+	}
+	hs.fullWidth("a long name")
+}
