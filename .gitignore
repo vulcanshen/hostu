@@ -1,0 +1,14 @@
+# terminu family template (tdp project/gitignore), copied to an app's
+# .gitignore; replace hostu. The app's own lines go below the last one.
+/hostu
+/dist/
+.local/
+.idea/
+.vscode/
+.DS_Store
+*.test
+*.out
+go.work
+go.work.sum
+.claude/settings.local.json
+.claude/worktrees/

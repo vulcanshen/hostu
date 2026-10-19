@@ -1,0 +1,46 @@
+// Package config reads config.yaml, the user's settings (tdp E3).
+package config
+
+import (
+	"errors"
+	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+
+	"gopkg.in/yaml.v3"
+)
+
+// File is the settings file in the settings directory.
+const File = "config.yaml"
+
+// Config is the settings hostu has: the family's input_tab_width only.
+type Config struct {
+	// InputTabWidth is how many spaces a tab in the text hostu shows is drawn
+	// as (tdp E3); 4 when unset.
+	InputTabWidth int `yaml:"input_tab_width"`
+}
+
+// Default is the settings with nothing set.
+var Default = Config{InputTabWidth: 4}
+
+// Load reads config.yaml in dir: no file is the defaults, and so is a
+// setting left out. A file that cannot be read gives the defaults and the
+// error.
+func Load(dir string) (Config, error) {
+	c := Default
+	b, err := os.ReadFile(filepath.Join(dir, File))
+	if errors.Is(err, fs.ErrNotExist) {
+		return c, nil
+	}
+	if err == nil {
+		err = yaml.Unmarshal(b, &c)
+	}
+	if err == nil && c.InputTabWidth < 1 {
+		err = fmt.Errorf("input_tab_width is %d: it is at least 1", c.InputTabWidth)
+	}
+	if err != nil {
+		return Default, err
+	}
+	return c, nil
+}
