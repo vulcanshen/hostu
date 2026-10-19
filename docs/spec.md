@@ -1,6 +1,6 @@
 # hostu 規格
 
-照 terminu design（tdp v0.8.2）用 terminu-go v0.2.1 做。畫面、按鍵、外框、顏色、popup 的開關這些 tdp 已經規定的不寫在這裡，
+照 terminu design（tdp v0.8.3）用 terminu-go v0.2.2 做。畫面、按鍵、外框、顏色、popup 的開關這些 tdp 已經規定的不寫在這裡，
 照 tdp 做。
 
 ## 一句話
@@ -175,4 +175,4 @@ profiles:
    icon、statusbar。
 3. **編輯**：profile 的新增、改名、複製、刪除、匯入；domain 的新增、編輯、刪除（表單）。
 4. **啟用**：confirm、`hosts.original`、直接寫／`sudo -n`／terminal popup 的 sudo／Windows 的 UAC、preview、statusbar 的對不上。
-5. **收尾**：README 寫完整、dev-remarks、L4 跨尺寸與 E5 兩種寬度的畫面測試、splash 與 `docs/icon.svg` 一致的測試；然後 judge。
+5. **收尾**：README 寫完整、dev-remarks、tdp L4 跨尺寸與 tdp E5 兩種寬度的畫面測試、splash 與 `docs/icon.svg` 一致的測試；然後 judge。

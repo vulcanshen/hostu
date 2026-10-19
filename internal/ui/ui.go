@@ -103,6 +103,11 @@ func newHostu(env Env) *hostu {
 	h.domains = &terminu.List{Columns: []terminu.Column{{Title: "Domain", Shrink: true}, {Title: "Addresses", Shrink: true, Drop: 1}}}
 	h.dp = &terminu.Panel{Label: "Domains", Body: h.domains, Actions: h.domainActions()}
 	h.pp = &terminu.Panel{Label: "Profiles", Body: h.profiles, Actions: h.profileActions(), Details: h.dp}
+	if h.storeErr != nil {
+		// What could not be read, in the middle of [1] (layout/panel).
+		h.pp.Fail = &terminu.Failure{Fact: "Can't read " + h.store.Path(),
+			Hint: "Fix it or move it away, then start hostu again"}
+	}
 	h.a.AddScreen(&terminu.Screen{Name: "Profiles", Panels: []*terminu.Panel{h.pp, h.dp},
 		Layout: func(w, ht int) []terminu.Rect {
 			left := w / 3
@@ -208,27 +213,31 @@ func (h *hostu) showDomains() {
 	h.domains.EmptyHint = "Press [n] to add one, or [Space] to see what you can do here"
 }
 
-// status is the statusbar: the hosts file, and the active profile with
-// whether the hosts file still has it. The path takes a third of the width
-// at most, cut from the front, so that what follows it is seen and never moves
-// as it changes (tdp L2).
+// status is the statusbar: the hosts file and whether it has the active
+// profile, then the active profile. Nothing moves as they change (tdp L2):
+// the path is at most a third of the width, cut from the front, and the
+// state after it is padded to its widest; the profile's name is last.
 func (h *hostu) status(w int) string {
 	grey := terminu.Fg(terminu.Overlay0)
 	path := h.env.Hosts
 	if room := max(12, w/3); terminu.Width(path) > room {
 		path = terminu.TruncateLeft(path, room)
 	}
-	text := grey.Render("hosts: " + path + "  active: ")
+	state, colour := "", terminu.Overlay0
+	switch {
+	case h.diskErr != nil:
+		state, colour = "(can't read)", terminu.Red
+	case h.differs():
+		state, colour = "(differs)", terminu.Peach
+	case h.store.Get(h.store.Active) != nil:
+		state = "(in sync)"
+	}
+	text := grey.Render("hosts: "+path+" ") + terminu.Fg(colour).Render(terminu.Pad(state, len("(can't read)"))) +
+		grey.Render("  active: ")
 	if h.store.Active == "" {
 		text += grey.Render("none")
 	} else {
 		text += terminu.Fg(terminu.Lavender).Render(h.store.Active)
-	}
-	switch {
-	case h.diskErr != nil:
-		text += terminu.Fg(terminu.Red).Render("  can't read the hosts file")
-	case h.differs():
-		text += terminu.Fg(terminu.Peach).Render("  hosts file differs")
 	}
 	return terminu.Truncate(text, w)
 }

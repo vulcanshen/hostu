@@ -6,11 +6,13 @@ package profile
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+	"unicode"
 
 	"gopkg.in/yaml.v3"
 
@@ -48,7 +50,53 @@ func Load(dir string) (s *Store, found bool, err error) {
 		return s, true, err
 	}
 	s.Profiles = slices.DeleteFunc(s.Profiles, func(p *Profile) bool { return p == nil })
-	return s, true, nil
+	return s, true, s.check()
+}
+
+// check holds a hand-edited file to what hostu itself writes, so that no
+// name it can't show and no line it shouldn't write gets in: names as
+// CheckName has them, each once; domains and addresses a hosts file takes.
+func (s *Store) check() error {
+	for i, p := range s.Profiles {
+		if err := CheckName(p.Name); err != nil {
+			return fmt.Errorf("profile %d is named %q: %w", i+1, p.Name, err)
+		}
+		if s.Taken(p.Name, p) {
+			return fmt.Errorf("two profiles are named %s", p.Name)
+		}
+		for j, d := range p.Domains {
+			if err := hosts.CheckDomain(d.Name); err != nil {
+				return fmt.Errorf("%s has %q, which is not a domain", p.Name, d.Name)
+			}
+			if hosts.Has(p.Domains[:j], d.Name) {
+				return fmt.Errorf("%s has %s twice", p.Name, d.Name)
+			}
+			if len(d.Addresses) == 0 {
+				return fmt.Errorf("%s has %s with no address", p.Name, d.Name)
+			}
+			for _, a := range d.Addresses {
+				if err := hosts.CheckAddress(a); err != nil {
+					return fmt.Errorf("%s has %q for %s, which is not an IPv4 or IPv6 address", p.Name, a, d.Name)
+				}
+			}
+		}
+	}
+	if s.Active != "" && s.Get(s.Active) == nil {
+		return fmt.Errorf("the active profile %s is not there", s.Active)
+	}
+	return nil
+}
+
+// CheckName says what is wrong with s as a profile's name: no space at
+// either end, no control character. Empty is the caller's to say.
+func CheckName(s string) error {
+	if s != strings.TrimSpace(s) {
+		return errors.New("A name has no space at either end")
+	}
+	if strings.ContainsFunc(s, unicode.IsControl) {
+		return errors.New("A name has no control characters")
+	}
+	return nil
 }
 
 // Path is where the store is kept.

@@ -63,3 +63,24 @@ func TestTakenAndRemove(t *testing.T) {
 		t.Fatalf("left %v", s.Profiles)
 	}
 }
+
+// A hand-edited profiles.yaml is held to what hostu writes itself: nothing
+// the screen cannot show or the hosts file should not have gets in.
+func TestLoadChecksWhatIsInIt(t *testing.T) {
+	for text, want := range map[string]string{
+		"profiles:\n  - name: \"a\\x1b[31m\"\n": "no control characters",
+		"profiles:\n  - name: \" a\"\n":         "no space at either end",
+		"profiles:\n  - name: a\n  - name: A\n": "two profiles are named",
+		"profiles:\n  - name: a\n    domains:\n      - domain: \"x\\x1b[31m\"\n        addresses: [10.0.0.1]\n":                                      "which is not a domain",
+		"profiles:\n  - name: a\n    domains:\n      - domain: x\n        addresses: [10.0.0]\n":                                                     "not an IPv4 or IPv6 address",
+		"profiles:\n  - name: a\n    domains:\n      - domain: x\n":                                                                                  "with no address",
+		"profiles:\n  - name: a\n    domains:\n      - domain: x\n        addresses: [10.0.0.1]\n      - domain: X\n        addresses: [10.0.0.2]\n": "has X twice",
+		"active: b\nprofiles:\n  - name: a\n": "the active profile b is not there",
+	} {
+		dir := t.TempDir()
+		os.WriteFile(filepath.Join(dir, File), []byte(text), 0o644)
+		if _, found, err := Load(dir); !found || err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("%q: %v, want %q", text, err, want)
+		}
+	}
+}

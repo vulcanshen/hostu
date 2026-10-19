@@ -17,3 +17,6 @@ Each release names the version of terminu design (tdp) it follows.
 - The statusbar shows the hosts file and the active profile, and says when the hosts file differs from it.
 - Profiles are kept in `profiles.yaml` in the settings directory (`HOSTU__CONFIG`); `HOSTU__HOSTS_FILE` names another
   hosts file to write; `config.yaml` takes `input_tab_width`.
+- A `profiles.yaml` changed by hand is checked as it is read: a name with a control character, two profiles of one
+  name, a domain or an address a hosts file can't take. hostu then says what is wrong and changes nothing, so nothing
+  it can't show or shouldn't write gets in.

@@ -17,6 +17,9 @@ import (
 // profileActions are [1] PROFILES': Enter writes the profile to the hosts
 // file; the rest make, change and take away profiles.
 func (h *hostu) profileActions() []terminu.Action {
+	// With profiles.yaml unread nothing can be saved: the actions that make
+	// a profile wait (tdp M6).
+	unread := func() bool { return h.storeErr != nil }
 	return []terminu.Action{
 		{Key: "Enter", Label: "Activate", Desc: "write it to the hosts file", Scope: terminu.ItemScope, Hint: "activate",
 			AskFor: func() *terminu.Ask { return h.activateAsk(h.current()) },
@@ -34,28 +37,48 @@ func (h *hostu) profileActions() []terminu.Action {
 			AskFor: func() *terminu.Ask {
 				p := h.current()
 				return &terminu.Ask{Title: "Delete", Subject: p.Name, Verb: "delete",
-					Details:  []string{fmt.Sprintf("Its %s go with it.", count(len(p.Domains), "domain"))},
+					Details:  []string{goesWith(len(p.Domains))},
 					Question: "Delete the profile " + p.Name + "?"}
 			},
 			Do: func() tea.Cmd { return h.deleteProfile(h.current()) }},
-		{Key: "n", Label: "new", Desc: "an empty profile", Scope: terminu.PanelScope, Hint: "new", Do: h.newProfile},
+		{Key: "n", Label: "new", Desc: "an empty profile", Scope: terminu.PanelScope, Hint: "new", Disabled: unread,
+			Do: h.newProfile},
 		{Key: "i", Label: "import", Desc: "the hosts file as it is now, as a new profile", Scope: terminu.PanelScope,
-			Do: h.importProfile},
+			Disabled: unread, Do: h.importProfile},
 	}
 }
 
+// goesWith says what goes with a profile of n domains when it is deleted.
+func goesWith(n int) string {
+	switch n {
+	case 0:
+		return "It has no domains."
+	case 1:
+		return "Its one domain goes with it."
+	}
+	return fmt.Sprintf("Its %d domains go with it.", n)
+}
+
 // nameInput is a text input for a profile's name: not empty, no space at
-// either end, no other profile's (but's own allowed).
-func (h *hostu) nameInput(in terminu.TextInput, but *profile.Profile) terminu.TextInput {
+// either end, no control character, no other profile's (but's own allowed).
+// Commit saves what it is for, so that a save that fails keeps the input
+// open with its value, the error popup over it (tdp popup, an action failing).
+func (h *hostu) nameInput(in terminu.TextInput, but *profile.Profile, commit func(string) error) terminu.TextInput {
 	in.Name = "Name"
 	in.Check = func(s string) error {
 		switch {
 		case s == "":
 			return terminu.ErrEmpty
-		case s != strings.TrimSpace(s):
-			return errors.New("A name has no space at either end")
+		case profile.CheckName(s) != nil:
+			return profile.CheckName(s)
 		case h.store.Taken(s, but):
 			return fmt.Errorf("There is a profile named %s already", s)
+		}
+		return nil
+	}
+	in.Commit = func(s string) error {
+		if err := commit(s); err != nil {
+			return errors.New(sentence(err))
 		}
 		return nil
 	}
@@ -63,11 +86,11 @@ func (h *hostu) nameInput(in terminu.TextInput, but *profile.Profile) terminu.Te
 }
 
 // add puts p after the others, saved, the cursor on it (tdp K3).
-func (h *hostu) add(p *profile.Profile) tea.Cmd {
+func (h *hostu) add(p *profile.Profile) error {
 	h.store.Profiles = append(h.store.Profiles, p)
 	if err := h.save(); err != nil {
 		h.store.Remove(p)
-		return h.a.ErrorAbout("Can't save", h.store.Path(), sentence(err))
+		return err
 	}
 	h.refresh()
 	h.profiles.Select(p.Name)
@@ -75,16 +98,26 @@ func (h *hostu) add(p *profile.Profile) tea.Cmd {
 	return nil
 }
 
+// unused is a name for a new profile from base, base itself when no profile
+// has it yet.
+func (h *hostu) unused(base string) string {
+	name := base
+	for i := 2; h.store.Taken(name, nil); i++ {
+		name = fmt.Sprintf("%s %d", base, i)
+	}
+	return name
+}
+
 func (h *hostu) newProfile() tea.Cmd {
 	return h.a.Text(h.nameInput(terminu.TextInput{Title: "New profile", Glyph: glyphPencil,
-		Prompt: "Name of the new profile", Verb: "add",
-		Done: func(s string) tea.Cmd { return h.add(&profile.Profile{Name: s}) }}, nil))
+		Prompt: "Name of the new profile", Verb: "add"}, nil,
+		func(s string) error { return h.add(&profile.Profile{Name: s}) }))
 }
 
 func (h *hostu) rename(p *profile.Profile) tea.Cmd {
 	return h.a.Text(h.nameInput(terminu.TextInput{Title: "Rename", Subject: p.Name, Glyph: glyphPencil,
-		Prompt: "New name for " + p.Name, Old: p.Name, Verb: "rename",
-		Done: func(s string) tea.Cmd {
+		Prompt: "New name for " + p.Name, Old: p.Name, Verb: "rename"}, p,
+		func(s string) error {
 			old, active := p.Name, h.store.Active
 			p.Name = s
 			if active == old {
@@ -92,51 +125,50 @@ func (h *hostu) rename(p *profile.Profile) tea.Cmd {
 			}
 			if err := h.save(); err != nil {
 				p.Name, h.store.Active = old, active
-				return h.a.ErrorAbout("Can't save", h.store.Path(), sentence(err))
+				return err
 			}
 			h.refresh()
 			h.profiles.Select(s)
 			h.showDomains()
 			return nil
-		}}, p))
+		}))
 }
 
 func (h *hostu) copyProfile(p *profile.Profile) tea.Cmd {
-	name := p.Name + " copy"
-	for i := 2; h.store.Taken(name, nil); i++ {
-		name = fmt.Sprintf("%s copy %d", p.Name, i)
-	}
 	return h.a.Text(h.nameInput(terminu.TextInput{Title: "Copy", Subject: p.Name, Glyph: glyphCopy,
-		Prompt: "Name of the copy", Suggest: name, Verb: "copy",
-		Done: func(s string) tea.Cmd {
+		Prompt: "Name of the copy", Suggest: h.unused(p.Name + " copy"), Verb: "copy"}, nil,
+		func(s string) error {
 			domains := make([]hosts.Domain, len(p.Domains))
 			for i, d := range p.Domains {
 				domains[i] = hosts.Domain{Name: d.Name, Addresses: slices.Clone(d.Addresses)}
 			}
 			return h.add(&profile.Profile{Name: s, Domains: domains})
-		}}, nil))
+		}))
 }
 
 // importProfile reads the hosts file again and keeps what is in it as a new
-// profile.
+// profile; lines it could not read are told in a Warning toast.
 func (h *hostu) importProfile() tea.Cmd {
-	return h.a.Text(h.nameInput(terminu.TextInput{Title: "Import", Subject: h.env.Hosts, Glyph: glyphImport,
-		Prompt: "Name of the profile made from it", Suggest: "imported", Verb: "import",
-		Done: func(s string) tea.Cmd {
+	var domains []hosts.Domain
+	var skipped int
+	in := h.nameInput(terminu.TextInput{Title: "Import", Subject: h.env.Hosts, Glyph: glyphImport,
+		Prompt: "Name of the profile made from it", Suggest: h.unused("imported"), Verb: "import"}, nil,
+		func(s string) error {
 			b, err := os.ReadFile(h.env.Hosts)
 			if err != nil {
-				return h.a.ErrorAbout("Can't read", h.env.Hosts, sentence(err))
+				return err
 			}
-			domains, skipped := hosts.Parse(string(b))
-			if cmd := h.add(&profile.Profile{Name: s, Domains: domains}); cmd != nil {
-				return cmd
-			}
-			say := fmt.Sprintf("Imported %s from %s", count(len(domains), "domain"), h.env.Hosts)
-			if skipped > 0 {
-				say += ", skipped " + count(skipped, "line")
-			}
-			return h.a.Toast(terminu.Success, say)
-		}}, nil))
+			domains, skipped = hosts.Parse(string(b))
+			return h.add(&profile.Profile{Name: s, Domains: domains})
+		})
+	in.Done = func(string) tea.Cmd {
+		say := fmt.Sprintf("Imported %s from %s", count(len(domains), "domain"), h.env.Hosts)
+		if skipped > 0 {
+			return h.a.Toast(terminu.Warning, say+", skipped "+count(skipped, "line"))
+		}
+		return h.a.Toast(terminu.Success, say)
+	}
+	return h.a.Text(in)
 }
 
 func (h *hostu) deleteProfile(p *profile.Profile) tea.Cmd {

@@ -1,7 +1,7 @@
 # hostu 開發者備忘
 
-用 profile 切換 hosts 檔的 TUI，遵循 [terminu design principle](https://github.com/vulcanshen/terminu)（tdp v0.8.2），用
-terminu-go v0.2.1 做。
+用 profile 切換 hosts 檔的 TUI，遵循 [terminu design principle](https://github.com/vulcanshen/terminu)（tdp v0.8.3），用
+terminu-go v0.2.2 做。
 
 ## 運作方式
 
@@ -61,10 +61,10 @@ terminu-go v0.2.1 做。
 ## 建置與開發
 
 - `make build`、`make check`（加上 `cross`：照 Windows 與 Linux 再 vet 一次）。
-- `make sandbox`：在暫存目錄裡跑 hostu（`tools/sandbox.sh`）：hosts 檔是 `/etc/hosts` 的複本，家目錄、設定、資料都是新的，每次都像第一次
-  啟動。開發、judge 都用它，不碰真的 hosts 檔與家目錄。
+- `make sandbox`：在暫存目錄裡跑 hostu（`tools/sandbox.sh`）：hosts 檔是一份示範檔，家目錄、設定、資料都是新的，每次都像第一次啟動。
+  開發、judge 都用它，不碰真的 hosts 檔與家目錄。不複製 `/etc/hosts`：畫面會進 judge 的證據與錄影，`/etc/hosts` 可能有公司的機器名。
 - 測試（`internal/ui`）不用終端機：送鍵、讀畫面；每個測試在 `/tmp` 下開一個短路徑的暫存目錄放 hosts 檔與設定（路徑短，confirm 與
-  toast 裡的路徑才不折行）。L4 跑五種尺寸、E5 三種 icon 寬度、L1 比最低尺寸小，`TestSplashIsDocsIcon` 守住 `internal/ui/icon.svg` 跟
+  toast 裡的路徑才不折行）。tdp L4 跑五種尺寸、tdp E5 三種 icon 寬度、tdp L1 比最低尺寸小，`TestSplashIsDocsIcon` 守住 `internal/ui/icon.svg` 跟
   `docs/icon.svg` 一樣（tdp E6）。sudo 要密碼的那條路用 `sh` 代替 sudo 測。
 - `make gif`：`.local/demos/demo.tape`，用同目錄的示範 hosts 檔與 `profiles.yaml`，複製到 `/tmp` 的新目錄再跑；不拿真的 `/etc/hosts`
   錄（它可能有公司的 domain）。
@@ -72,6 +72,6 @@ terminu-go v0.2.1 做。
 
 ## 發布
 
-還沒發過版。照 tdp project 的「發布」：`make check`、CHANGELOG 的 `## Unreleased` 改成 `## vX.Y.Z — tdp v0.8.2`、打 tag、push；
+還沒發過版。照 tdp project 的「發布」：`make check`、CHANGELOG 的 `## Unreleased` 改成 `## vX.Y.Z — tdp v0.8.3`、打 tag、push；
 release.yml 在 ubuntu、macOS、Windows 跑測試，goreleaser 發 Homebrew tap 與 scoop bucket。`install.ps1`、`uninstall.ps1` 是 hostu 自己寫的
 （範本沒有）。

@@ -14,5 +14,5 @@ cross: ## 照 Windows 與 Linux 再 vet 一次（hostu 出 Windows 版；在 mac
 	GOOS=linux go vet ./...
 
 .PHONY: sandbox
-sandbox: build ## 在暫存目錄裡跑 hostu：hosts 檔是 /etc/hosts 的複本，設定、資料、家目錄都是新的
+sandbox: build ## 在暫存目錄裡跑 hostu：hosts 檔是一份示範檔，設定、資料、家目錄都是新的
 	tools/sandbox.sh ./$(BINARY)

@@ -30,7 +30,7 @@ type written struct {
 // warning when it has no localhost.
 func (h *hostu) activateAsk(p *profile.Profile) *terminu.Ask {
 	ask := &terminu.Ask{Title: "Activate", Subject: p.Name, Verb: "write",
-		Details:  []string{fmt.Sprintf("The hosts file becomes the %s of %s.", count(len(p.Domains), "domain"), p.Name)},
+		Details:  []string{fmt.Sprintf("The hosts file gets %s, and nothing else.", count(len(p.Domains), "domain"))},
 		Question: "Write " + p.Name + " to " + h.env.Hosts + "?"}
 	if !hosts.Has(p.Domains, "localhost") {
 		ask.Details = append(ask.Details, p.Name+" has no localhost: programs that connect to localhost stop working.")

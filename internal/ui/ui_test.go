@@ -46,6 +46,29 @@ var states = []struct {
 	{"splash", []string{"V"}},
 }
 
+// ownPopups are the popups hostu opens by what happens rather than by a key:
+// the toasts, an error popup, sudo's terminal popup. env, when set, is where
+// hostu starts instead of the officeAndHome sandbox; then runs once it has
+// started.
+var ownPopups = []struct {
+	name string
+	env  func(t *testing.T) Env
+	then func(hs *harness)
+}{
+	{"the first start's INFO toast", func(t *testing.T) Env { return sandbox(t, "") }, nil},
+	{"a SUCCESS toast", nil, func(hs *harness) { hs.keys("Enter", "Enter") }},
+	{"a WARNING toast", func(t *testing.T) Env {
+		env := sandbox(t, officeAndHome)
+		os.WriteFile(env.Hosts, []byte(systemHosts+"not an address\n"), 0o644)
+		return env
+	}, func(hs *harness) { hs.keys("i", "Enter") }},
+	{"an error popup", func(t *testing.T) Env { return sandbox(t, "profiles: [\n") }, nil},
+	{"sudo's terminal popup", nil, func(hs *harness) {
+		hs.send(written{p: hs.h.store.Get("home"),
+			elevated: &hosts.Elevated{Command: []string{"sh", "-c", "sleep 2"}, Temp: filepath.Join(hs.env.Data, "none")}})
+	}},
+}
+
 // iconWidths are the widths of an icon and a powerline symbol the screen
 // tests run with (tdp E5).
 var iconWidths = [][2]int{{1, 1}, {2, 1}, {2, 2}}
@@ -72,6 +95,8 @@ type sized struct {
 	name  string
 	keys  []string
 	small [2]int // the size to shrink to once it is open; 0 for none
+	env   func(t *testing.T) Env
+	then  func(hs *harness)
 }
 
 // TestL4EveryLineIsTheTerminalsWidth is tdp L4: on every screen and under
@@ -83,6 +108,9 @@ func TestL4EveryLineIsTheTerminalsWidth(t *testing.T) {
 	for _, sz := range [][2]int{{80, 24}, {80, 40}, {100, 30}, {120, 40}, {160, 50}} {
 		for _, st := range states {
 			cases = append(cases, sized{w: sz[0], h: sz[1], name: st.name, keys: st.keys})
+		}
+		for _, p := range ownPopups {
+			cases = append(cases, sized{w: sz[0], h: sz[1], name: p.name, env: p.env, then: p.then})
 		}
 	}
 	eachIconWidth(t, cases, func(c sized) string { return fmt.Sprintf("%dx%d %s", c.w, c.h, c.name) }, checkSized)
@@ -99,11 +127,24 @@ func TestE5PopupBiggerThanTheScreen(t *testing.T) {
 			cases = append(cases, sized{w: 120, h: 40, name: st.name, keys: st.keys, small: small})
 		}
 	}
+	for _, p := range ownPopups {
+		for _, small := range [][2]int{{80, 40}, {120, 24}, {80, 24}, {80, 5}, {1, 1}} {
+			cases = append(cases, sized{w: 120, h: 40, name: p.name, env: p.env, then: p.then, small: small})
+		}
+	}
 	eachIconWidth(t, cases, func(c sized) string { return fmt.Sprintf("%s, then %dx%d", c.name, c.small[0], c.small[1]) }, checkSized)
 }
 
 func checkSized(t *testing.T, c sized) {
-	hs := newHarness(t, c.w, c.h)
+	var hs *harness
+	if c.env != nil {
+		hs = start(t, c.env(t), c.w, c.h)
+	} else {
+		hs = newHarness(t, c.w, c.h)
+	}
+	if c.then != nil {
+		c.then(hs)
+	}
 	hs.keys(c.keys...)
 	if c.small[0] > 0 {
 		hs.send(tea.WindowSizeMsg{Width: c.small[0], Height: c.small[1]})
@@ -229,7 +270,7 @@ func TestActivateWritesTheHostsFile(t *testing.T) {
 	t.Parallel()
 	hs := newHarness(t, 80, 40)
 	hs.keys("G", "Enter") // home
-	hs.contains("ACTIVATE: home", "The hosts file becomes the 2 domains of home.", "Write home to "+hs.env.Hosts+"?")
+	hs.contains("ACTIVATE: home", "The hosts file gets 2 domains, and nothing else.", "Write home to "+hs.env.Hosts+"?")
 	hs.lacks("has no localhost")
 	hs.keys("Enter")
 	home := hs.h.store.Get("home")
@@ -274,14 +315,14 @@ func TestActivateWarnsWithoutLocalhost(t *testing.T) {
 func TestStatusSaysTheHostsFileDiffers(t *testing.T) {
 	t.Parallel()
 	hs := newHarness(t, 80, 40)
-	hs.lacks("hosts file differs")
+	hs.contains("(in sync)")
 	hs.keys("Tab", "j", "D", "Enter") // broadcasthost out of default
-	hs.contains("hosts file differs")
+	hs.contains("(differs)     active: default")
 	if hs.hostsFile() != systemHosts {
 		t.Fatal("a change to the profile wrote the hosts file")
 	}
 	hs.keys("1", "Enter", "Enter")
-	hs.lacks("hosts file differs")
+	hs.contains("(in sync)")
 }
 
 func TestNewProfile(t *testing.T) {
@@ -332,7 +373,7 @@ func TestImportTheHostsFile(t *testing.T) {
 	hs := newHarness(t, 80, 40)
 	os.WriteFile(hs.env.Hosts, []byte(systemHosts+"10.9.9.9 build.corp\nnot an address\n"), 0o644)
 	hs.keys("i", "Enter")
-	hs.contains("Imported 3 domains from " + hs.env.Hosts + ", skipped 1 line")
+	hs.contains("WARNING", "Imported 3 domains from "+hs.env.Hosts+", skipped 1 line")
 	p := hs.h.store.Get("imported")
 	if p == nil || len(p.Domains) != 3 || p.Domains[2].Name != "build.corp" {
 		t.Fatalf("imported %+v", p)
@@ -349,7 +390,7 @@ func TestDeleteProfile(t *testing.T) {
 	hs.keys("D")
 	hs.lacks("DELETE")
 	hs.keys("j", "D")
-	hs.contains("DELETE: office", "Its 1 domain go with it.", "Delete the profile office?")
+	hs.contains("DELETE: office", "Its one domain goes with it.", "Delete the profile office?")
 	hs.keys("Enter")
 	if hs.h.store.Get("office") != nil || strings.Contains(hs.saved(), "office") {
 		t.Fatal("office is still there")
@@ -418,8 +459,11 @@ func TestBrokenProfilesAreLeftAlone(t *testing.T) {
 	const broken = "profiles: [\n"
 	hs := start(t, sandbox(t, broken), 80, 40)
 	hs.contains("CAN'T READ")
-	hs.keys("Esc", "n", "lab", "Enter")
-	hs.contains("could not be read, so hostu")
+	hs.keys("Esc")
+	hs.contains("Can't read", "Fix it or move it")
+	hs.lacks("Press [n]")
+	hs.keys("n", "i") // disabled: nothing can be saved (tdp M6)
+	hs.lacks("NEW PROFILE", "IMPORT")
 	if hs.saved() != broken {
 		t.Fatalf("profiles.yaml is now %q", hs.saved())
 	}
@@ -469,4 +513,31 @@ func TestLongNameIsCut(t *testing.T) {
 		}
 	}
 	hs.fullWidth("a long name")
+}
+
+// A save that fails keeps the input open with its value, the error popup
+// over it, so Enter tries again once it can (tdp popup, note).
+func TestSaveFailsKeepsTheInput(t *testing.T) {
+	t.Parallel()
+	hs := newHarness(t, 80, 40)
+	if err := os.Chmod(hs.env.Config, 0o555); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chmod(hs.env.Config, 0o755)
+	if f, err := os.CreateTemp(hs.env.Config, "w"); err == nil {
+		f.Close()
+		t.Skip("running as root: every directory is writable")
+	}
+	hs.keys("n", "lab", "Enter")
+	if hs.h.store.Get("lab") != nil {
+		t.Fatal("a profile was added that could not be saved")
+	}
+	hs.contains("FAILED")
+	hs.keys("Esc")
+	hs.contains("NEW PROFILE", "lab")
+	os.Chmod(hs.env.Config, 0o755)
+	hs.keys("Enter")
+	if hs.h.store.Get("lab") == nil {
+		t.Fatal("Enter did not try again")
+	}
 }
