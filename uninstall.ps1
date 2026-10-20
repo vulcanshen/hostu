@@ -42,8 +42,8 @@ function Ask($dir, $what) {
 # Where tdp E3 puts the settings and the data; HOSTU__CONFIG and HOSTU__DATA move them.
 $configDir = if ($env:HOSTU__CONFIG) { $env:HOSTU__CONFIG } elseif ($env:XDG_CONFIG_HOME) { Join-Path $env:XDG_CONFIG_HOME $app } else { Join-Path $env:USERPROFILE ".config\$app" }
 $dataDir = if ($env:HOSTU__DATA) { $env:HOSTU__DATA } else { Join-Path $env:USERPROFILE ".$app" }
-Ask $configDir "$app settings and profiles"
-Ask $dataDir "$app data (the hosts file as it was before $app first wrote it)"
+Ask $configDir "$app settings"
+Ask $dataDir "$app data (the profiles, and the hosts file as it was before $app first wrote it)"
 
 Write-Host ""
 Write-Host "$app uninstalled. The hosts file is as $app last wrote it."

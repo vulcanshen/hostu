@@ -9,7 +9,7 @@ import (
 	"github.com/vulcanshen/hostu/internal/hosts"
 )
 
-// Config is the settings directory: config.yaml and profiles.yaml.
+// Config is the settings directory: config.yaml.
 func Config() (string, error) {
 	if d := os.Getenv("HOSTU__CONFIG"); d != "" {
 		return d, nil
@@ -24,7 +24,7 @@ func Config() (string, error) {
 	return filepath.Join(home, ".config", "hostu"), nil
 }
 
-// Data is the data directory: hosts.original.
+// Data is the data directory: profiles.yaml and hosts.original.
 func Data() (string, error) {
 	if d := os.Getenv("HOSTU__DATA"); d != "" {
 		return d, nil

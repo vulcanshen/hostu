@@ -65,9 +65,10 @@ brews:
     # Font and truecolor requirements, the platforms.
     caveats: |
       Run `hostu` to start. The first time, it reads your hosts file into a
-      profile named default. Profiles live in ~/.config/hostu/profiles.yaml;
+      profile named default. Profiles live in ~/.hostu/profiles.yaml;
       the hosts file as it was before hostu first wrote it is kept in
-      ~/.hostu/hosts.original. Writing the hosts file asks for sudo.
+      ~/.hostu/hosts.original; the settings are in
+      ~/.config/hostu/config.yaml. Writing the hosts file asks for sudo.
 
       A Nerd Font terminal profile and a truecolor (24-bit) terminal are
       required. macOS, Linux and Windows.

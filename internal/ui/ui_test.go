@@ -27,6 +27,7 @@ var states = []struct {
 	{"Space menu on [1]", []string{"Space"}},
 	{"Space menu on [2]", []string{"Tab", "Space"}},
 	{"global operation popup over the Space menu", []string{"Space", "G", "Enter"}},
+	{"App Log", []string{"!"}},
 	{"key reference", []string{"?"}},
 	{"activate confirm", []string{"Enter"}},
 	{"activate confirm with a warning", []string{"j", "Enter"}},
@@ -47,7 +48,8 @@ var states = []struct {
 }
 
 // ownPopups are the popups hostu opens by what happens rather than by a key:
-// the toasts, an error popup, sudo's terminal popup. env, when set, is where
+// the toasts, an error popup, MOVE ASIDE, sudo's terminal popup, the App Log
+// with an entry of each level. env, when set, is where
 // hostu starts instead of the officeAndHome sandbox; then runs once it has
 // started.
 var ownPopups = []struct {
@@ -62,7 +64,23 @@ var ownPopups = []struct {
 		os.WriteFile(env.Hosts, []byte(systemHosts+"not an address\n"), 0o644)
 		return env
 	}, func(hs *harness) { hs.keys("i", "Enter") }},
-	{"an error popup", func(t *testing.T) Env { return sandbox(t, "profiles: [\n") }, nil},
+	{"an error popup", func(t *testing.T) Env {
+		env := sandbox(t, officeAndHome)
+		os.Remove(env.Hosts)
+		os.Mkdir(env.Hosts, 0o755) // a directory: it can't be read
+		return env
+	}, nil},
+	{"MOVE ASIDE", func(t *testing.T) Env { return sandbox(t, "profiles: [\n") }, nil},
+	{"the App Log", func(t *testing.T) Env {
+		env := sandbox(t, "")
+		os.WriteFile(env.Hosts, []byte(systemHosts+"not an address\n"), 0o644)
+		return env
+	}, func(hs *harness) { // a WARN of the first start, an OK of a new profile
+		hs.keys("n", "lab", "Enter")
+		hs.h.a.Log(terminu.Info, "an info")
+		hs.h.a.Log(terminu.Error, "an error")
+		hs.keys("!")
+	}},
 	{"sudo's terminal popup", nil, func(hs *harness) {
 		hs.send(written{p: hs.h.store.Get("home"),
 			elevated: &hosts.Elevated{Command: []string{"sh", "-c", "sleep 2"}, Temp: filepath.Join(hs.env.Data, "none")}})
@@ -266,6 +284,15 @@ func TestFirstStartMakesDefault(t *testing.T) {
 	hs.lacks("Made the profile default")
 }
 
+// The lines of the hosts file default leaves out are told in a Warning toast.
+func TestFirstStartSaysWhatItSkipped(t *testing.T) {
+	t.Parallel()
+	env := sandbox(t, "")
+	os.WriteFile(env.Hosts, []byte(systemHosts+"not an address\n"), 0o644)
+	hs := start(t, env, 120, 40)
+	hs.contains("WARNING", "Made the profile default from "+env.Hosts+", skipped 1 line")
+}
+
 func TestActivateWritesTheHostsFile(t *testing.T) {
 	t.Parallel()
 	hs := newHarness(t, 80, 40)
@@ -452,21 +479,126 @@ func TestPreview(t *testing.T) {
 	hs.contains("HOSTS FILE — home", `# Written by hostu from the profile "home".`, "192.168.1.20  nas.home")
 }
 
-// A profiles.yaml hostu can't read is left as it is: it says so, and every
-// change after it fails instead of writing over the file.
-func TestBrokenProfilesAreLeftAlone(t *testing.T) {
+// broken are profiles.yaml files hostu can't read and why MOVE ASIDE says:
+// not YAML, YAML of the wrong shape, YAML that check finds wrong. yaml's own
+// "yaml: " is left out, its errors are on one line, and a value of the wrong
+// kind is said in the user's words, not Go's.
+var broken = map[string]string{
+	"profiles: [\n":              "line 1: did not find expected node content",
+	"profiles: 3\n":              "line 1: 3 is not a list",
+	"active: [a]\nprofiles: 3\n": "line 1: a list is not text; line 2: 3 is not a list",
+	"active: office\nprofiles:\n  - name: office\n    domains:\n      - domain: x\n        addresses: [10.0.0]\n": `the profile office has "10.0.0" for x, which is not an IPv4 or IPv6 address`,
+}
+
+// A profiles.yaml hostu can't read is asked about before anything else
+// (tdp E3): Esc leaves hostu, the file and the hosts file as they were.
+func TestBrokenProfilesEscQuits(t *testing.T) {
 	t.Parallel()
-	const broken = "profiles: [\n"
-	hs := start(t, sandbox(t, broken), 80, 40)
-	hs.contains("CAN'T READ")
-	hs.keys("Esc")
-	hs.contains("Can't read", "Fix it or move it")
-	hs.lacks("Press [n]")
-	hs.keys("n", "i") // disabled: nothing can be saved (tdp M6)
-	hs.lacks("NEW PROFILE", "IMPORT")
-	if hs.saved() != broken {
-		t.Fatalf("profiles.yaml is now %q", hs.saved())
+	for text, why := range broken {
+		hs := start(t, sandbox(t, text), 120, 40)
+		path := filepath.Join(hs.env.Data, "profiles.yaml")
+		hs.contains("MOVE ASIDE", path+" can't be read:", why, "Move it to profiles.yaml.bak and start a new one?", "Enter:move Esc:quit")
+		hs.lacks("yaml:")
+		hs.keys("Esc")
+		if !hs.quit {
+			t.Fatalf("%q: Esc did not leave hostu:\n%s", text, hs.text())
+		}
+		if _, err := os.Stat(path + ".bak"); hs.saved() != text || hs.hostsFile() != systemHosts || err == nil {
+			t.Fatalf("%q: profiles.yaml is now %q, the hosts file %q", text, hs.saved(), hs.hostsFile())
+		}
 	}
+}
+
+// Enter puts it aside as profiles.yaml.bak, never over another (.bak.1
+// then), and hostu starts as the first time: default from the hosts file.
+func TestBrokenProfilesMovedAside(t *testing.T) {
+	t.Parallel()
+	env := sandbox(t, "profiles: [\n")
+	path := filepath.Join(env.Data, "profiles.yaml")
+	os.WriteFile(path+".bak", []byte("an older one\n"), 0o644)
+	hs := start(t, env, 120, 40)
+	hs.contains("Move it to profiles.yaml.bak.1 and start a new one?")
+	hs.keys("Enter")
+	if b, _ := os.ReadFile(path + ".bak.1"); string(b) != "profiles: [\n" {
+		t.Fatalf("profiles.yaml.bak.1 is %q", b)
+	}
+	if b, _ := os.ReadFile(path + ".bak"); string(b) != "an older one\n" {
+		t.Fatalf("profiles.yaml.bak is %q", b)
+	}
+	hs.lacks("MOVE ASIDE")
+	hs.contains("Made the profile default from "+env.Hosts, "active: default", "broadcasthost")
+	if !strings.Contains(hs.saved(), "active: default") {
+		t.Fatalf("profiles.yaml is\n%s", hs.saved())
+	}
+	hs.keys("!")
+	hs.contains("moved "+path+" to "+path+".bak.1", "Made the profile default")
+}
+
+// A config.yaml hostu can't read is asked about first, then profiles.yaml;
+// Enter on the first puts a new config.yaml with the defaults in its place.
+func TestBrokenConfigThenProfiles(t *testing.T) {
+	t.Parallel()
+	env := sandbox(t, "profiles: [\n")
+	os.MkdirAll(env.Config, 0o755)
+	cfg := filepath.Join(env.Config, "config.yaml")
+	os.WriteFile(cfg, []byte("input_tab_width: 0\n"), 0o644)
+	hs := start(t, env, 120, 40)
+	hs.contains(cfg+" can't be read:", "the setting input_tab_width is 0: it is at least 1", "Move it to config.yaml.bak")
+	hs.keys("Enter")
+	if b, _ := os.ReadFile(cfg); string(b) != "input_tab_width: 4\n" {
+		t.Fatalf("the new config.yaml is %q", b)
+	}
+	hs.contains(filepath.Join(env.Data, "profiles.yaml")+" can't be read:", "Move it to profiles.yaml.bak")
+	hs.keys("Enter")
+	hs.lacks("MOVE ASIDE")
+	hs.contains("active: default")
+	hs.keys("!")
+	hs.contains("Wrote a new " + cfg + " with the defaults")
+}
+
+// Asked about config.yaml at the first start, hostu has written nothing yet:
+// Esc leaves no profiles.yaml behind.
+func TestBrokenConfigAtTheFirstStart(t *testing.T) {
+	t.Parallel()
+	env := sandbox(t, "")
+	os.MkdirAll(env.Config, 0o755)
+	os.WriteFile(filepath.Join(env.Config, "config.yaml"), []byte("input_tab_width: 0\n"), 0o644)
+	hs := start(t, env, 120, 40)
+	hs.contains("MOVE ASIDE")
+	hs.lacks("Made the profile default")
+	hs.keys("Esc")
+	if _, err := os.Stat(filepath.Join(env.Data, "profiles.yaml")); !hs.quit || err == nil {
+		t.Fatalf("quit %v, profiles.yaml %v", hs.quit, err)
+	}
+}
+
+// The hosts file is not hostu's own: one it can't read is an error popup,
+// hostu goes on, and the statusbar says it.
+func TestHostsFileCantBeRead(t *testing.T) {
+	t.Parallel()
+	env := sandbox(t, officeAndHome)
+	os.Remove(env.Hosts)
+	os.Mkdir(env.Hosts, 0o755)
+	hs := start(t, env, 120, 40)
+	hs.contains("CAN'T READ", "(can't read)")
+	hs.lacks("MOVE ASIDE")
+	hs.keys("Esc")
+	hs.contains("office", "!:1 error")
+}
+
+// What the user did, and what hostu did by itself, is in the App Log (tdp
+// F5, dialog/note).
+func TestAppLog(t *testing.T) {
+	t.Parallel()
+	hs := newHarness(t, 120, 40)
+	hs.keys("n", "lab", "Enter", "r", "Backspace", "Backspace", "Backspace", "work", "Enter", "c", "Enter")
+	hs.keys("Tab", "n", "Enter", "nas.lan", "Enter", "j", "Enter", "10.0.0.9", "Enter", "Tab", "Enter")
+	hs.keys("Enter", "Tab", "Enter", "D", "Enter")
+	hs.keys("1", "gg", "Enter", "Enter", "!")
+	hs.contains("Made the profile lab", "Renamed the profile lab to work", "Copied the profile work to work copy",
+		"Added nas.lan to the profile work copy", "Saved nas.lan in the profile work copy",
+		"Deleted nas.lan from the profile work copy",
+		"Kept "+hs.env.Hosts+" as it was in "+filepath.Join(hs.env.Data, original), "default is in "+hs.env.Hosts+" now")
 }
 
 func TestQuit(t *testing.T) {
@@ -520,11 +652,11 @@ func TestLongNameIsCut(t *testing.T) {
 func TestSaveFailsKeepsTheInput(t *testing.T) {
 	t.Parallel()
 	hs := newHarness(t, 80, 40)
-	if err := os.Chmod(hs.env.Config, 0o555); err != nil {
+	if err := os.Chmod(hs.env.Data, 0o555); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chmod(hs.env.Config, 0o755)
-	if f, err := os.CreateTemp(hs.env.Config, "w"); err == nil {
+	defer os.Chmod(hs.env.Data, 0o755)
+	if f, err := os.CreateTemp(hs.env.Data, "w"); err == nil {
 		f.Close()
 		t.Skip("running as root: every directory is writable")
 	}
@@ -535,7 +667,7 @@ func TestSaveFailsKeepsTheInput(t *testing.T) {
 	hs.contains("FAILED")
 	hs.keys("Esc")
 	hs.contains("NEW PROFILE", "lab")
-	os.Chmod(hs.env.Config, 0o755)
+	os.Chmod(hs.env.Data, 0o755)
 	hs.keys("Enter")
 	if hs.h.store.Get("lab") == nil {
 		t.Fatal("Enter did not try again")

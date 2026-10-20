@@ -17,9 +17,6 @@ import (
 // profileActions are [1] PROFILES': Enter writes the profile to the hosts
 // file; the rest make, change and take away profiles.
 func (h *hostu) profileActions() []terminu.Action {
-	// With profiles.yaml unread nothing can be saved: the actions that make
-	// a profile wait (tdp M6).
-	unread := func() bool { return h.storeErr != nil }
 	return []terminu.Action{
 		{Key: "Enter", Label: "Activate", Desc: "write it to the hosts file", Scope: terminu.ItemScope, Hint: "activate",
 			AskFor: func() *terminu.Ask { return h.activateAsk(h.current()) },
@@ -41,10 +38,9 @@ func (h *hostu) profileActions() []terminu.Action {
 					Question: "Delete the profile " + p.Name + "?"}
 			},
 			Do: func() tea.Cmd { return h.deleteProfile(h.current()) }},
-		{Key: "n", Label: "new", Desc: "an empty profile", Scope: terminu.PanelScope, Hint: "new", Disabled: unread,
-			Do: h.newProfile},
+		{Key: "n", Label: "new", Desc: "an empty profile", Scope: terminu.PanelScope, Hint: "new", Do: h.newProfile},
 		{Key: "i", Label: "import", Desc: "the hosts file as it is now, as a new profile", Scope: terminu.PanelScope,
-			Disabled: unread, Do: h.importProfile},
+			Do: h.importProfile},
 	}
 }
 
@@ -88,7 +84,7 @@ func (h *hostu) nameInput(in terminu.TextInput, but *profile.Profile, commit fun
 // add puts p after the others, saved, the cursor on it (tdp K3).
 func (h *hostu) add(p *profile.Profile) error {
 	h.store.Profiles = append(h.store.Profiles, p)
-	if err := h.save(); err != nil {
+	if err := h.store.Save(); err != nil {
 		h.store.Remove(p)
 		return err
 	}
@@ -111,7 +107,13 @@ func (h *hostu) unused(base string) string {
 func (h *hostu) newProfile() tea.Cmd {
 	return h.a.Text(h.nameInput(terminu.TextInput{Title: "New profile", Glyph: glyphPencil,
 		Prompt: "Name of the new profile", Verb: "add"}, nil,
-		func(s string) error { return h.add(&profile.Profile{Name: s}) }))
+		func(s string) error {
+			if err := h.add(&profile.Profile{Name: s}); err != nil {
+				return err
+			}
+			h.a.Log(terminu.Success, "Made the profile "+s)
+			return nil
+		}))
 }
 
 func (h *hostu) rename(p *profile.Profile) tea.Cmd {
@@ -123,13 +125,14 @@ func (h *hostu) rename(p *profile.Profile) tea.Cmd {
 			if active == old {
 				h.store.Active = s
 			}
-			if err := h.save(); err != nil {
+			if err := h.store.Save(); err != nil {
 				p.Name, h.store.Active = old, active
 				return err
 			}
 			h.refresh()
 			h.profiles.Select(s)
 			h.showDomains()
+			h.a.Log(terminu.Success, "Renamed the profile "+old+" to "+s)
 			return nil
 		}))
 }
@@ -142,7 +145,11 @@ func (h *hostu) copyProfile(p *profile.Profile) tea.Cmd {
 			for i, d := range p.Domains {
 				domains[i] = hosts.Domain{Name: d.Name, Addresses: slices.Clone(d.Addresses)}
 			}
-			return h.add(&profile.Profile{Name: s, Domains: domains})
+			if err := h.add(&profile.Profile{Name: s, Domains: domains}); err != nil {
+				return err
+			}
+			h.a.Log(terminu.Success, "Copied the profile "+p.Name+" to "+s)
+			return nil
 		}))
 }
 
@@ -174,11 +181,12 @@ func (h *hostu) importProfile() tea.Cmd {
 func (h *hostu) deleteProfile(p *profile.Profile) tea.Cmd {
 	i := slices.Index(h.store.Profiles, p)
 	h.store.Remove(p)
-	if err := h.save(); err != nil {
+	if err := h.store.Save(); err != nil {
 		h.store.Profiles = slices.Insert(h.store.Profiles, i, p)
 		return h.a.ErrorAbout("Can't save", h.store.Path(), sentence(err))
 	}
 	h.refresh()
+	h.a.Log(terminu.Success, "Deleted the profile "+p.Name)
 	return nil
 }
 

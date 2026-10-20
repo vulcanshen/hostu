@@ -17,10 +17,9 @@ Usage:
   hostu version    print the version (-v, --version)
   hostu help       print this help (-h, --help)
 
-Profiles are kept in profiles.yaml in the settings directory
-($XDG_CONFIG_HOME/hostu, else ~/.config/hostu; HOSTU__CONFIG moves it).
-The hosts file hostu writes is the system's; HOSTU__HOSTS_FILE names
-another.
+Profiles are kept in profiles.yaml in the data directory (~/.hostu;
+HOSTU__DATA moves it). The hosts file hostu writes is the system's;
+HOSTU__HOSTS_FILE names another.
 `
 
 func main() {

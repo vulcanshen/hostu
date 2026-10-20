@@ -78,7 +78,7 @@ func windowsCopy(tmp, path string) error {
 	quote := func(s string) string { return "'" + strings.ReplaceAll(s, "'", "''") + "'" }
 	if out, err := output(tool, "powershell", "-NoProfile", "-Command",
 		"Copy-Item -LiteralPath "+quote(tmp)+" -Destination "+quote(path)+" -Force"); err != nil {
-		return fmt.Errorf("%s could not write %s: %s", tool, path, strings.TrimSpace(string(out)))
+		return fmt.Errorf("Could not write it with %s: %s", tool, strings.TrimSpace(string(out)))
 	}
 	return nil
 }

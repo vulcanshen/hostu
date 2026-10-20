@@ -127,6 +127,7 @@ hostu help       印出命令列的用法（-h、--help）
 |---|---|
 | `Space` | 這裡能做什麼：對這一項、對這個 panel、對整個 app |
 | `?` | 這裡能按的每一個鍵 |
+| `!` | App Log：這次打開以來 hostu 做了什麼、哪裡出了問題 |
 | `Tab`、`1`–`2` | 換到另一個 panel；照編號跳到那個 panel |
 | `j\|k` | 移動；走過最後一個回到第一個 |
 | `gg\|G` | 到最上面、最下面 |
@@ -155,7 +156,7 @@ hostu 自己的：
 | 什麼 | 在哪裡 | 用什麼改 |
 |---|---|---|
 | 設定 `config.yaml` | `$XDG_CONFIG_HOME/hostu`，沒設就是 `~/.config/hostu` | `HOSTU__CONFIG` |
-| profile `profiles.yaml` | 設定目錄 | `HOSTU__CONFIG` |
+| profile `profiles.yaml` | `~/.hostu` | `HOSTU__DATA` |
 | hostu 第一次寫之前的 hosts 檔 `hosts.original` | `~/.hostu` | `HOSTU__DATA` |
 | hostu 寫的 hosts 檔 | `/etc/hosts`；Windows 是 `%SystemRoot%\System32\drivers\etc\hosts` | `HOSTU__HOSTS_FILE` |
 
@@ -166,6 +167,9 @@ Windows 上的 `~` 是 `%USERPROFILE%`。`config.yaml` 只有一個設定，term
 | `input_tab_width` | hostu 顯示的文字裡，Tab 畫成幾格空白 | `4` |
 
 `profiles.yaml` 是 hostu 自己的格式，每改一次就存一次。想試 hostu 又不想動到 hosts 檔，把 `HOSTU__HOSTS_FILE` 指到一份複本就好。
+
+`config.yaml` 或 `profiles.yaml` 讀不了時（例如手改壞了），hostu 一開始就先問：`Enter` 把它改名成 `.bak`，換一個新的開始（profile 照第一次
+打開那樣做），`Esc` 離開，印出是哪個檔、哪裡不對。
 
 ## 限制
 

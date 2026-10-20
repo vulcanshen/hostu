@@ -8,10 +8,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	terminu "github.com/vulcanshen/terminu-go"
+	"gopkg.in/yaml.v3"
 
 	"github.com/vulcanshen/hostu/internal/config"
 	"github.com/vulcanshen/hostu/internal/hosts"
@@ -46,9 +49,8 @@ type hostu struct {
 	a     *terminu.App
 	env   Env
 	store *profile.Store
-	// storeErr is why profiles.yaml could not be read: hostu then writes
-	// nothing over it.
-	storeErr error
+	// first is that there is no profiles.yaml yet: begin makes it.
+	first bool
 	// onDisk is the hosts file as hostu last read it; diskErr why it could
 	// not be read.
 	onDisk  []hosts.Domain
@@ -56,7 +58,15 @@ type hostu struct {
 
 	profiles, domains *terminu.List
 	pp, dp            *terminu.Panel
-	start             []func() tea.Cmd // what to say once the program runs
+	unread            []unread // to ask about once the program runs
+}
+
+// unread is a file of hostu's own it could not read, and fresh what makes a
+// new one once it is moved aside (tdp E3, when it cannot be read).
+type unread struct {
+	path  string
+	err   error
+	fresh func() tea.Cmd
 }
 
 // New makes hostu with its things where env says.
@@ -71,27 +81,16 @@ func newHostu(env Env) *hostu {
 	h.a.Splash = splash()
 	h.a.Status = h.status
 	h.a.OnMsg = h.onMsg
-	h.a.Start = func() tea.Cmd {
-		h.refresh()
-		var cmds []tea.Cmd
-		for _, say := range h.start {
-			cmds = append(cmds, say())
-		}
-		return tea.Batch(cmds...)
-	}
+	h.a.Start = h.askUnread
 	// The icon's width is known once the program runs: the names line up
 	// again with the right space for it.
 	h.a.OnResize = func(int, int) tea.Cmd { h.refresh(); return nil }
 
 	cfg, err := config.Load(env.Config)
 	if err != nil {
-		h.fail("Can't read", env.Config+"/"+config.File, err)
+		h.unread = append(h.unread, unread{config.Path(env.Config), err, h.freshConfig})
 	}
 	h.a.InputTabWidth = cfg.InputTabWidth
-	h.readHosts()
-	if h.diskErr != nil {
-		h.fail("Can't read", env.Hosts, h.diskErr)
-	}
 	h.load()
 
 	h.profiles = &terminu.List{
@@ -103,11 +102,6 @@ func newHostu(env Env) *hostu {
 	h.domains = &terminu.List{Columns: []terminu.Column{{Title: "Domain", Shrink: true}, {Title: "Addresses", Shrink: true, Drop: 1}}}
 	h.dp = &terminu.Panel{Label: "Domains", Body: h.domains, Actions: h.domainActions()}
 	h.pp = &terminu.Panel{Label: "Profiles", Body: h.profiles, Actions: h.profileActions(), Details: h.dp}
-	if h.storeErr != nil {
-		// What could not be read, in the middle of [1] (layout/panel).
-		h.pp.Fail = &terminu.Failure{Fact: "Can't read " + h.store.Path(),
-			Hint: "Fix it or move it away, then start hostu again"}
-	}
 	h.a.AddScreen(&terminu.Screen{Name: "Profiles", Panels: []*terminu.Panel{h.pp, h.dp},
 		Layout: func(w, ht int) []terminu.Rect {
 			left := w / 3
@@ -126,47 +120,138 @@ func splash() terminu.Splash {
 	return s
 }
 
-// fail is an error popup once the program runs.
-func (h *hostu) fail(title, subject string, err error) {
-	h.start = append(h.start, func() tea.Cmd { return h.a.ErrorAbout(title, subject, sentence(err)) })
-}
-
-// load reads profiles.yaml. The first time there is none, the hosts file as
-// it is becomes the profile default, the active one.
+// load reads profiles.yaml. One that can't be read is asked about (tdp E3),
+// and once it is moved aside there is none: the first start.
 func (h *hostu) load() {
-	s, found, err := profile.Load(h.env.Config)
-	h.store = s
+	s, found, err := profile.Load(h.env.Data)
+	h.store, h.first = s, !found
+	if err != nil {
+		h.unread = append(h.unread, unread{s.Path(), err, func() tea.Cmd { h.load(); return nil }})
+	}
+}
+
+// begin starts hostu once its own files are read, nothing written before:
+// the hosts file is read as it is now. The first time, with no
+// profiles.yaml, it becomes the profile default, the active one; the lines
+// of it that were skipped are told in a Warning toast.
+func (h *hostu) begin() tea.Cmd {
+	skipped := h.readHosts()
+	defer h.refresh()
 	switch {
-	case err != nil:
-		h.storeErr = err
-		h.fail("Can't read", s.Path(), err)
-	case !found && h.diskErr == nil:
-		s.Profiles = []*profile.Profile{{Name: "default", Domains: h.onDisk}}
-		s.Active = "default"
-		if err := h.save(); err != nil {
-			h.fail("Can't save", s.Path(), err)
-			return
+	case h.diskErr != nil:
+		return h.a.ErrorAbout("Can't read", h.env.Hosts, sentence(h.diskErr))
+	case !h.first:
+		return nil
+	}
+	s := h.store
+	s.Profiles = []*profile.Profile{{Name: "default", Domains: h.onDisk}}
+	s.Active = "default"
+	if err := s.Save(); err != nil {
+		return h.a.ErrorAbout("Can't save", s.Path(), sentence(err))
+	}
+	say := "Made the profile default from " + h.env.Hosts
+	if skipped > 0 {
+		return h.a.Toast(terminu.Warning, say+", skipped "+count(skipped, "line"))
+	}
+	return h.a.Toast(terminu.Info, say)
+}
+
+// freshConfig is a new config.yaml with the defaults, in place of the one
+// moved aside.
+func (h *hostu) freshConfig() tea.Cmd {
+	if err := config.WriteDefault(h.env.Config); err != nil {
+		return h.a.ErrorAbout("Can't save", config.Path(h.env.Config), sentence(err))
+	}
+	h.a.Log(terminu.Info, "Wrote a new "+short(config.Path(h.env.Config))+" with the defaults")
+	return nil
+}
+
+// askUnread asks about the first file of hostu's own it could not read, and
+// about the next once that one is moved aside; Esc leaves hostu (tdp E3).
+// With none left, hostu begins.
+func (h *hostu) askUnread() tea.Cmd {
+	if len(h.unread) == 0 {
+		return h.begin()
+	}
+	u := h.unread[0]
+	h.unread = h.unread[1:]
+	return h.a.MoveAside(u.path, reason(u.err), func() tea.Cmd { return tea.Batch(u.fresh(), h.askUnread()) })
+}
+
+// reason is err as MOVE ASIDE gives it, after the path: without the path
+// again, without yaml's "yaml: ", on one line, and a value of the wrong
+// kind in the user's words, not Go's.
+func reason(err error) error {
+	var pe *os.PathError
+	var te *yaml.TypeError
+	switch {
+	case errors.As(err, &pe):
+		return pe.Err
+	case errors.As(err, &te):
+		why := make([]string, len(te.Errors))
+		for i, e := range te.Errors {
+			why[i] = wrongKind(e)
 		}
-		h.start = append(h.start, func() tea.Cmd { return h.a.Toast(terminu.Info, "Made the profile default from "+h.env.Hosts) })
+		return errors.New(strings.Join(why, "; "))
 	}
+	if s, ok := strings.CutPrefix(err.Error(), "yaml: "); ok {
+		return errors.New(s)
+	}
+	return err
 }
 
-// save writes profiles.yaml, unless it could not be read.
-func (h *hostu) save() error {
-	if h.storeErr != nil {
-		return fmt.Errorf("%s could not be read, so hostu leaves it as it is: %w", h.store.Path(), h.storeErr)
+// unmarshal is one of yaml's errors for a value of the wrong kind:
+// "line 1: cannot unmarshal !!int `3` into []*profile.Profile".
+var unmarshal = regexp.MustCompile("^(line \\d+): cannot unmarshal !!(\\w+)(?: `(.*)`)? into (.+)$")
+
+// wrongKind is e, one of yaml's errors, as "line 1: 3 is not a list".
+func wrongKind(e string) string {
+	m := unmarshal.FindStringSubmatch(e)
+	if m == nil {
+		return e
 	}
-	return h.store.Save()
+	what := m[3]
+	if what == "" {
+		what = map[string]string{"map": "a mapping", "seq": "a list"}[m[2]]
+	}
+	want := "a mapping"
+	switch {
+	case strings.HasPrefix(m[4], "[]"):
+		want = "a list"
+	case m[4] == "string":
+		want = "text"
+	case m[4] == "int":
+		want = "a number"
+	}
+	if what == "" {
+		return m[1] + ": not " + want
+	}
+	return m[1] + ": " + what + " is not " + want
 }
 
-// readHosts reads the hosts file as it is now.
-func (h *hostu) readHosts() {
+// short is p with the home directory written ~, as terminu-go writes paths
+// in the App Log.
+func short(p string) string {
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return p
+	}
+	if rest, ok := strings.CutPrefix(p, home+string(filepath.Separator)); ok {
+		return "~" + string(filepath.Separator) + rest
+	}
+	return p
+}
+
+// readHosts reads the hosts file as it is now; skipped is how many of its
+// lines were not an address and names.
+func (h *hostu) readHosts() (skipped int) {
 	b, err := os.ReadFile(h.env.Hosts)
 	h.diskErr = err
 	h.onDisk = nil
 	if err == nil {
-		h.onDisk, _ = hosts.Parse(string(b))
+		h.onDisk, skipped = hosts.Parse(string(b))
 	}
+	return skipped
 }
 
 // refresh shows the profiles as they are now.
@@ -174,11 +259,11 @@ func (h *hostu) refresh() {
 	rows := make([]terminu.Row, len(h.store.Profiles))
 	blank := strings.Repeat(" ", terminu.Width(glyphActive)+1)
 	for i, p := range h.store.Profiles {
-		name := blank + p.Name
+		rows[i] = terminu.Row{ID: p.Name, Cells: []string{blank + p.Name, fmt.Sprint(len(p.Domains))}}
 		if p.Name == h.store.Active {
-			name = terminu.Fg(terminu.Green).Render(glyphActive) + " " + p.Name
+			rows[i].Cells[0] = glyphActive + " " + p.Name
+			rows[i].Styled = [][]terminu.Span{{{Text: glyphActive, Style: terminu.Fg(terminu.Green)}, {Text: " " + p.Name}}}
 		}
-		rows[i] = terminu.Row{ID: p.Name, Cells: []string{name, fmt.Sprint(len(p.Domains))}}
 	}
 	h.profiles.SetRows(rows)
 	h.showDomains()
@@ -217,7 +302,7 @@ func (h *hostu) showDomains() {
 // profile, then the active profile. Nothing moves as they change (tdp L2):
 // the path is at most a third of the width, cut from the front, and the
 // state after it is padded to its widest; the profile's name is last.
-func (h *hostu) status(w int) string {
+func (h *hostu) status(w int) []terminu.Span {
 	grey := terminu.Fg(terminu.Overlay0)
 	path := h.env.Hosts
 	if room := max(12, w/3); terminu.Width(path) > room {
@@ -232,14 +317,12 @@ func (h *hostu) status(w int) string {
 	case h.store.Get(h.store.Active) != nil:
 		state = "(in sync)"
 	}
-	text := grey.Render("hosts: "+path+" ") + terminu.Fg(colour).Render(terminu.Pad(state, len("(can't read)"))) +
-		grey.Render("  active: ")
+	spans := []terminu.Span{{Text: "hosts: " + path + " ", Style: grey},
+		{Text: terminu.Pad(state, len("(can't read)")), Style: terminu.Fg(colour)}, {Text: "  active: ", Style: grey}}
 	if h.store.Active == "" {
-		text += grey.Render("none")
-	} else {
-		text += terminu.Fg(terminu.Lavender).Render(h.store.Active)
+		return append(spans, terminu.Span{Text: "none", Style: grey})
 	}
-	return terminu.Truncate(text, w)
+	return append(spans, terminu.Span{Text: h.store.Active, Style: terminu.Fg(terminu.Lavender)})
 }
 
 // differs reports that the hosts file is not what the active profile writes:

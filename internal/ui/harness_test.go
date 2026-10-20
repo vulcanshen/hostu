@@ -81,8 +81,8 @@ func fill(t *testing.T, env Env, profiles string) {
 		t.Fatal(err)
 	}
 	if profiles != "" {
-		os.MkdirAll(env.Config, 0o755)
-		if err := os.WriteFile(filepath.Join(env.Config, "profiles.yaml"), []byte(profiles), 0o644); err != nil {
+		os.MkdirAll(env.Data, 0o755)
+		if err := os.WriteFile(filepath.Join(env.Data, "profiles.yaml"), []byte(profiles), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -225,6 +225,6 @@ func (hs *harness) hostsFile() string {
 
 // saved is profiles.yaml as it is now.
 func (hs *harness) saved() string {
-	b, _ := os.ReadFile(filepath.Join(hs.env.Config, "profiles.yaml"))
+	b, _ := os.ReadFile(filepath.Join(hs.env.Data, "profiles.yaml"))
 	return string(b)
 }

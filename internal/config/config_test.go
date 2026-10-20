@@ -24,3 +24,15 @@ func TestLoad(t *testing.T) {
 		}
 	}
 }
+
+// The new config.yaml in place of one moved aside reads as the defaults,
+// in a directory not there yet too.
+func TestWriteDefault(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "hostu")
+	if err := WriteDefault(dir); err != nil {
+		t.Fatal(err)
+	}
+	if c, err := Load(dir); err != nil || c != Default {
+		t.Fatalf("%+v %v", c, err)
+	}
+}

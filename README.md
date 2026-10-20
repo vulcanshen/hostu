@@ -133,6 +133,7 @@ The keys every family app shares:
 |---|---|
 | `Space` | What you can do here: on this item, on this panel, and for the whole app |
 | `?` | Every key that works here |
+| `!` | The App Log: what hostu has done and what went wrong while it has been open |
 | `Tab`, `1`–`2` | The other panel; jump to a panel by its number |
 | `j\|k` | Move; past the last one you are back at the first |
 | `gg\|G` | To the top, to the bottom |
@@ -161,7 +162,7 @@ In the form, type several addresses in Addresses between spaces: `10.1.2.3 fd00:
 | What | Where | Moved by |
 |---|---|---|
 | Settings, `config.yaml` | `$XDG_CONFIG_HOME/hostu`, else `~/.config/hostu` | `HOSTU__CONFIG` |
-| Profiles, `profiles.yaml` | the settings directory | `HOSTU__CONFIG` |
+| Profiles, `profiles.yaml` | `~/.hostu` | `HOSTU__DATA` |
 | Your hosts file as it was before hostu first wrote it, `hosts.original` | `~/.hostu` | `HOSTU__DATA` |
 | The hosts file hostu writes | `/etc/hosts`; on Windows `%SystemRoot%\System32\drivers\etc\hosts` | `HOSTU__HOSTS_FILE` |
 
@@ -173,6 +174,10 @@ On Windows `~` is `%USERPROFILE%`. `config.yaml` has one setting, shared by the 
 
 `profiles.yaml` is hostu's own; hostu saves it every time you change something. To try hostu without touching your
 hosts file, point `HOSTU__HOSTS_FILE` at a copy of it.
+
+When `config.yaml` or `profiles.yaml` can't be read (say, after a change by hand), hostu asks before anything else:
+`Enter` renames it to `.bak` and starts with a new one (for the profiles, as the first time), `Esc` quits and prints
+the file and what is wrong with it.
 
 ## Limits
 

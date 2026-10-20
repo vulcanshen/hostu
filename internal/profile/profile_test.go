@@ -43,9 +43,11 @@ func TestSaveAndLoad(t *testing.T) {
 
 func TestLoadBroken(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, File), []byte("profiles: [\n"), 0o644)
-	if _, found, err := Load(dir); err == nil || !found {
-		t.Fatalf("a broken file: %v %v", found, err)
+	for _, text := range []string{"profiles: [\n", "active: a\nprofiles:\n  - name: a\n    domains: 3\n"} {
+		os.WriteFile(filepath.Join(dir, File), []byte(text), 0o644)
+		if s, found, err := Load(dir); err == nil || !found || len(s.Profiles) != 0 || s.Active != "" {
+			t.Fatalf("%q: %+v %v %v", text, s, found, err)
+		}
 	}
 }
 
@@ -69,18 +71,24 @@ func TestTakenAndRemove(t *testing.T) {
 func TestLoadChecksWhatIsInIt(t *testing.T) {
 	for text, want := range map[string]string{
 		"profiles:\n  - name: \"a\\x1b[31m\"\n": "no control characters",
-		"profiles:\n  - name: \" a\"\n":         "no space at either end",
+		"profiles:\n  - name: \" a\"\n":         `profile 1 is named " a": a name has no space at either end`,
 		"profiles:\n  - name: a\n  - name: A\n": "two profiles are named",
 		"profiles:\n  - name: a\n    domains:\n      - domain: \"x\\x1b[31m\"\n        addresses: [10.0.0.1]\n":                                      "which is not a domain",
 		"profiles:\n  - name: a\n    domains:\n      - domain: x\n        addresses: [10.0.0]\n":                                                     "not an IPv4 or IPv6 address",
 		"profiles:\n  - name: a\n    domains:\n      - domain: x\n":                                                                                  "with no address",
 		"profiles:\n  - name: a\n    domains:\n      - domain: x\n        addresses: [10.0.0.1]\n      - domain: X\n        addresses: [10.0.0.2]\n": "has X twice",
-		"active: b\nprofiles:\n  - name: a\n": "the active profile b is not there",
+		"active: b\nprofiles:\n  - name: a\n": `the active profile "b" is not there`,
+		// Quoted: Esc on MOVE ASIDE writes it to the terminal as it is.
+		"active: \"\\x1b[2J\"\n": `the active profile "\x1b[2J" is not there`,
 	} {
 		dir := t.TempDir()
 		os.WriteFile(filepath.Join(dir, File), []byte(text), 0o644)
-		if _, found, err := Load(dir); !found || err == nil || !strings.Contains(err.Error(), want) {
+		s, found, err := Load(dir)
+		if !found || err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("%q: %v, want %q", text, err, want)
+		}
+		if len(s.Profiles) != 0 || s.Active != "" {
+			t.Errorf("%q: kept %+v", text, s)
 		}
 	}
 }

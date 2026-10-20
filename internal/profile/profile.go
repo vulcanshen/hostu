@@ -1,6 +1,6 @@
 // Package profile keeps hostu's profiles in profiles.yaml: the user's own
-// lists of domains, settings by tdp E3, with the one written to the hosts
-// file marked active.
+// lists of domains, data by tdp E3, with the one written to the hosts file
+// marked active.
 package profile
 
 import (
@@ -19,7 +19,7 @@ import (
 	"github.com/vulcanshen/hostu/internal/hosts"
 )
 
-// File is the profiles' file in the settings directory.
+// File is the profiles' file in the data directory.
 const File = "profiles.yaml"
 
 // Profile is a hosts file kept as hostu's own: a name and its domains.
@@ -36,10 +36,13 @@ type Store struct {
 	path     string
 }
 
-// Load reads the store in dir; found is false when it is not there yet.
+// Load reads the store in dir; found is false when it is not there yet. A
+// file that can't be read, or that check finds wrong, gives a store with no
+// profiles and the error: nothing of it is shown or written.
 func Load(dir string) (s *Store, found bool, err error) {
-	s = &Store{path: filepath.Join(dir, File)}
-	b, err := os.ReadFile(s.path)
+	path := filepath.Join(dir, File)
+	s = &Store{path: path}
+	b, err := os.ReadFile(path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return s, false, nil
 	}
@@ -47,10 +50,13 @@ func Load(dir string) (s *Store, found bool, err error) {
 		return s, false, err
 	}
 	if err := yaml.Unmarshal(b, s); err != nil {
-		return s, true, err
+		return &Store{path: path}, true, err
 	}
 	s.Profiles = slices.DeleteFunc(s.Profiles, func(p *Profile) bool { return p == nil })
-	return s, true, s.check()
+	if err := s.check(); err != nil {
+		return &Store{path: path}, true, err
+	}
+	return s, true, nil
 }
 
 // check holds a hand-edited file to what hostu itself writes, so that no
@@ -59,30 +65,31 @@ func Load(dir string) (s *Store, found bool, err error) {
 func (s *Store) check() error {
 	for i, p := range s.Profiles {
 		if err := CheckName(p.Name); err != nil {
-			return fmt.Errorf("profile %d is named %q: %w", i+1, p.Name, err)
+			why := err.Error() // a sentence for the input it is made for
+			return fmt.Errorf("profile %d is named %q: %s", i+1, p.Name, strings.ToLower(why[:1])+why[1:])
 		}
 		if s.Taken(p.Name, p) {
 			return fmt.Errorf("two profiles are named %s", p.Name)
 		}
 		for j, d := range p.Domains {
 			if err := hosts.CheckDomain(d.Name); err != nil {
-				return fmt.Errorf("%s has %q, which is not a domain", p.Name, d.Name)
+				return fmt.Errorf("the profile %s has %q, which is not a domain", p.Name, d.Name)
 			}
 			if hosts.Has(p.Domains[:j], d.Name) {
-				return fmt.Errorf("%s has %s twice", p.Name, d.Name)
+				return fmt.Errorf("the profile %s has %s twice", p.Name, d.Name)
 			}
 			if len(d.Addresses) == 0 {
-				return fmt.Errorf("%s has %s with no address", p.Name, d.Name)
+				return fmt.Errorf("the profile %s has %s with no address", p.Name, d.Name)
 			}
 			for _, a := range d.Addresses {
 				if err := hosts.CheckAddress(a); err != nil {
-					return fmt.Errorf("%s has %q for %s, which is not an IPv4 or IPv6 address", p.Name, a, d.Name)
+					return fmt.Errorf("the profile %s has %q for %s, which is not an IPv4 or IPv6 address", p.Name, a, d.Name)
 				}
 			}
 		}
 	}
 	if s.Active != "" && s.Get(s.Active) == nil {
-		return fmt.Errorf("the active profile %s is not there", s.Active)
+		return fmt.Errorf("the active profile %q is not there", s.Active)
 	}
 	return nil
 }

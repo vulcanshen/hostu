@@ -45,8 +45,12 @@ func (h *hostu) activate(p *profile.Profile) tea.Cmd {
 	text := hosts.Format(p.Name, p.Domains)
 	path, data := h.env.Hosts, h.env.Data
 	return func() tea.Msg {
-		if err := keepOriginal(path, data); err != nil {
+		kept, err := keepOriginal(path, data)
+		if err != nil {
 			return written{p: p, err: err}
+		}
+		if kept != "" {
+			h.a.Log(terminu.Info, "Kept "+short(path)+" as it was in "+short(kept))
 		}
 		e, err := hosts.Write(path, text)
 		return written{p: p, elevated: e, err: err}
@@ -54,23 +58,24 @@ func (h *hostu) activate(p *profile.Profile) tea.Cmd {
 }
 
 // keepOriginal copies the hosts file into the data directory the first time
-// hostu writes it: the profiles leave out its comments.
-func keepOriginal(path, data string) error {
+// hostu writes it: the profiles leave out its comments. kept is the copy it
+// made, "" when there was one already or no hosts file to copy.
+func keepOriginal(path, data string) (kept string, err error) {
 	keep := filepath.Join(data, original)
 	if _, err := os.Stat(keep); !errors.Is(err, fs.ErrNotExist) {
-		return err
+		return "", err
 	}
 	b, err := os.ReadFile(path)
 	if errors.Is(err, fs.ErrNotExist) {
-		return nil
+		return "", nil
 	}
 	if err != nil {
-		return err
+		return "", err
 	}
 	if err := os.MkdirAll(data, 0o755); err != nil {
-		return err
+		return "", err
 	}
-	return os.WriteFile(keep, b, 0o644)
+	return keep, os.WriteFile(keep, b, 0o644)
 }
 
 // onMsg takes what the lib leaves: the end of a write.
@@ -90,7 +95,7 @@ func (h *hostu) onMsg(msg tea.Msg) tea.Cmd {
 			OnExit: func(err error) tea.Cmd {
 				e.Done()
 				if err != nil {
-					return h.a.ErrorAbout("Write failed", h.env.Hosts, e.Command[0]+" did not write it: "+sentence(err))
+					return h.a.ErrorAbout("Write failed", h.env.Hosts, sentence(fmt.Errorf("could not write it with %s: %v", e.Command[0], err)))
 				}
 				return h.wrote(w.p)
 			}})
@@ -103,13 +108,13 @@ func (h *hostu) wrote(p *profile.Profile) tea.Cmd {
 	h.readHosts()
 	active := h.store.Active
 	h.store.Active = p.Name
-	err := h.save()
+	err := h.store.Save()
 	if err != nil {
 		h.store.Active = active
 	}
 	h.refresh()
 	if err != nil {
-		return h.a.ErrorAbout("Can't save", h.store.Path(), "The hosts file has "+p.Name+", but "+sentence(err))
+		return h.a.ErrorAbout("Can't save", h.store.Path(), "The hosts file has "+p.Name+", but it is not kept as the active profile. "+sentence(err))
 	}
 	return h.a.Toast(terminu.Success, p.Name+" is in "+h.env.Hosts+" now")
 }

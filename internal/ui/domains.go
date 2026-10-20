@@ -103,17 +103,19 @@ func (h *hostu) domainForm(p *profile.Profile, i int) tea.Cmd {
 		} else {
 			p.Domains[i] = d
 		}
-		if err := h.save(); err != nil {
+		if err := h.store.Save(); err != nil {
 			p.Domains = old
 			return nil, err
 		}
 		h.refresh()
 		h.domains.Select(name)
 		if i < 0 {
+			h.a.Log(terminu.Success, "Added "+name+" to the profile "+p.Name)
 			// Added: the menu it may have come from was about the domain
 			// under the cursor before (tdp T1).
 			return h.a.CloseAll(), nil
 		}
+		h.a.Log(terminu.Success, "Saved "+name+" in the profile "+p.Name)
 		return nil, nil
 	}
 	return h.a.Form(f)
@@ -122,10 +124,11 @@ func (h *hostu) domainForm(p *profile.Profile, i int) tea.Cmd {
 func (h *hostu) deleteDomain(p *profile.Profile, i int) tea.Cmd {
 	old := slices.Clone(p.Domains)
 	p.Domains = slices.Delete(p.Domains, i, i+1)
-	if err := h.save(); err != nil {
+	if err := h.store.Save(); err != nil {
 		p.Domains = old
 		return h.a.ErrorAbout("Can't save", h.store.Path(), sentence(err))
 	}
 	h.refresh()
+	h.a.Log(terminu.Success, "Deleted "+old[i].Name+" from the profile "+p.Name)
 	return nil
 }
