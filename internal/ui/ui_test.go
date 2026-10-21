@@ -304,7 +304,7 @@ func TestActivateWritesTheHostsFile(t *testing.T) {
 	if hs.hostsFile() != hosts.Format("home", home.Domains) {
 		t.Fatalf("the hosts file is\n%s", hs.hostsFile())
 	}
-	hs.contains("home is in "+hs.env.Hosts+" now", "active: home")
+	hs.contains("Wrote home to "+hs.env.Hosts, "active: home")
 	if !strings.Contains(hs.saved(), "active: home") {
 		t.Fatalf("profiles.yaml is\n%s", hs.saved())
 	}
@@ -531,7 +531,7 @@ func TestBrokenProfilesMovedAside(t *testing.T) {
 		t.Fatalf("profiles.yaml is\n%s", hs.saved())
 	}
 	hs.keys("!")
-	hs.contains("moved "+path+" to "+path+".bak.1", "Made the profile default")
+	hs.contains("Moved "+path+" to "+path+".bak.1", "Made the profile default")
 }
 
 // A config.yaml hostu can't read is asked about first, then profiles.yaml.
@@ -603,7 +603,7 @@ func TestAppLog(t *testing.T) {
 	hs.contains("Made the profile lab", "Renamed the profile lab to work", "Copied the profile work to work copy",
 		"Added nas.lan to the profile work copy", "Saved nas.lan in the profile work copy",
 		"Deleted nas.lan from the profile work copy",
-		"Kept "+hs.env.Hosts+" as it was in "+filepath.Join(hs.env.Data, original), "default is in "+hs.env.Hosts+" now")
+		"Kept "+hs.env.Hosts+" as it was in "+filepath.Join(hs.env.Data, original), "Wrote default to "+hs.env.Hosts)
 }
 
 func TestQuit(t *testing.T) {
@@ -634,7 +634,7 @@ func TestSudoAsksInATerminal(t *testing.T) {
 	if _, err := os.Stat(tmp.Name()); err == nil {
 		t.Fatal("the temporary file is left")
 	}
-	hs.contains("home is in " + hs.env.Hosts + " now")
+	hs.contains("Wrote home to " + hs.env.Hosts)
 }
 
 // A long name is cut and the short columns keep their width (layout/panel):

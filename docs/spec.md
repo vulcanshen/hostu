@@ -1,6 +1,6 @@
 # hostu 規格
 
-照 terminu design（tdp v0.9.2）用 terminu-go v0.4.2 做。畫面、按鍵、外框、顏色、popup 的開關這些 tdp 已經規定的不寫在這裡，
+照 terminu design（tdp v0.9.2）用 terminu-go v0.4.3 做。畫面、按鍵、外框、顏色、popup 的開關這些 tdp 已經規定的不寫在這裡，
 照 tdp 做。
 
 ## 一句話
@@ -118,7 +118,7 @@ Space:menu ?:help !:log Tab|1–2:panels q:quit
      這個 terminal 只跑一個程式做一件事，沒有歷史與選取模式，每個鍵都給 sudo（tdp dialog/terminal）。
    - **Windows 沒有權限時**：用 `sudo`（Windows 11 24H2 起內建）或 `gsudo` 跑複製，系統跳出 UAC 的視窗；terminu-go 的終端機只有 Unix，
      而 UAC 本來就不在終端機裡問。兩個都沒有時開 error popup，寫出要裝 gsudo 或用系統管理員開終端機。
-4. **成功**：這個 profile 變成生效的那一個（icon 移過來），Success toast `office is in /etc/hosts now`。失敗：error popup 寫出原因，
+4. **成功**：這個 profile 變成生效的那一個（icon 移過來），Success toast `Wrote office to /etc/hosts`（動詞在前，App Log 照同一句記，大寫開頭）。失敗：error popup 寫出原因，
    生效的那一個不變。
 
 ## 資料

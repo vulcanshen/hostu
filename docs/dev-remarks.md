@@ -1,7 +1,7 @@
 # hostu 開發者備忘
 
 用 profile 切換 hosts 檔的 TUI，遵循 [terminu design principle](https://github.com/vulcanshen/terminu)（tdp v0.9.2），用
-terminu-go v0.4.2 做。
+terminu-go v0.4.3 做。
 
 ## 運作方式
 

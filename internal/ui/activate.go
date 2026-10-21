@@ -116,5 +116,7 @@ func (h *hostu) wrote(p *profile.Profile) tea.Cmd {
 	if err != nil {
 		return h.a.ErrorAbout("Can't save", h.store.Path(), "The hosts file has "+p.Name+", but it is not kept as the active profile. "+sentence(err))
 	}
-	return h.a.Toast(terminu.Success, p.Name+" is in "+h.env.Hosts+" now")
+	// The verb first: the App Log takes the toast as it is, a capital first
+	// (tdp note-78), and the name stays as it is.
+	return h.a.Toast(terminu.Success, "Wrote "+p.Name+" to "+h.env.Hosts)
 }
