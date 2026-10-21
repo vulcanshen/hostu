@@ -1,6 +1,6 @@
 # hostu 規格
 
-照 terminu design（tdp v0.9.2）用 terminu-go v0.4.3 做。畫面、按鍵、外框、顏色、popup 的開關這些 tdp 已經規定的不寫在這裡，
+照 terminu design（tdp v0.9.3）用 terminu-go v0.4.4 做。畫面、按鍵、外框、顏色、popup 的開關這些 tdp 已經規定的不寫在這裡，
 照 tdp 做。
 
 ## 一句話

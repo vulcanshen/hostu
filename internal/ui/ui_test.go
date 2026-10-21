@@ -497,7 +497,7 @@ func TestBrokenProfilesEscQuits(t *testing.T) {
 	for text, why := range broken {
 		hs := start(t, sandbox(t, text), 120, 40)
 		path := filepath.Join(hs.env.Data, "profiles.yaml")
-		hs.contains("MOVE ASIDE", path+" can't be read:", why, "Move it to profiles.yaml.bak and start a new one?", "Enter:move Esc:quit")
+		hs.contains("MOVE ASIDE", path+" can't be read:", why, "Move it to profiles.yaml.bak and start fresh?", "Enter:move Esc:quit")
 		hs.lacks("yaml:")
 		hs.keys("Esc")
 		if !hs.quit {
@@ -517,7 +517,7 @@ func TestBrokenProfilesMovedAside(t *testing.T) {
 	path := filepath.Join(env.Data, "profiles.yaml")
 	os.WriteFile(path+".bak", []byte("an older one\n"), 0o644)
 	hs := start(t, env, 120, 40)
-	hs.contains("Move it to profiles.yaml.bak.1 and start a new one?")
+	hs.contains("Move it to profiles.yaml.bak.1 and start fresh?")
 	hs.keys("Enter")
 	if b, _ := os.ReadFile(path + ".bak.1"); string(b) != "profiles: [\n" {
 		t.Fatalf("profiles.yaml.bak.1 is %q", b)

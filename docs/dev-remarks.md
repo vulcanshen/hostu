@@ -1,7 +1,7 @@
 # hostu 開發者備忘
 
-用 profile 切換 hosts 檔的 TUI，遵循 [terminu design principle](https://github.com/vulcanshen/terminu)（tdp v0.9.2），用
-terminu-go v0.4.3 做。
+用 profile 切換 hosts 檔的 TUI，遵循 [terminu design principle](https://github.com/vulcanshen/terminu)（tdp v0.9.3），用
+terminu-go v0.4.4 做。
 
 ## 運作方式
 
@@ -46,7 +46,8 @@ terminu-go v0.4.3 做。
   值不縮。窄的時候先收位址那一欄、名稱與 domain 永遠留著。
 - **profile 名稱不分大小寫不能重複**、domain 在同一個 profile 裡不分大小寫不能重複：hosts 檔的名稱不分大小寫。
 - **`profiles.yaml` 是資料**（tdp E3，hostu 回報的 HU17）：使用者寫給 app 的清單算資料，放 `~/.hostu`；設定只留 app 自己的選項。
-  hostu 還沒發過版，沒有寫搬家。
+  hostu 還沒發過版，沒有寫搬家，設定目錄的舊 `profiles.yaml` 也不算「不再用的檔」（tdp E3-23），不用 `App.NoLongerUsed`。之後的版本
+  不再用哪個檔時，才照 E3-23 每次啟動叫它，CHANGELOG 寫一句。
 - **讀不了的檔搬開之後照第一次打開**（tdp E3-18）：hostu 沒有 profile 的時候本來就把 hosts 檔讀成 `default`，搬開之後也一樣，生效的
   profile 一開始就對得上 hosts 檔；hosts 檔也讀不到時不建，第一次存檔才有檔。`config.yaml` 第一次打開不建（hostu 沒有改設定的地方），
   搬開之後也不建，用預設值。
@@ -93,6 +94,6 @@ terminu-go v0.4.3 做。
 
 ## 發布
 
-還沒發過版。照 tdp project 的「發布」：`make check`、CHANGELOG 的 `## Unreleased` 改成 `## vX.Y.Z — tdp v0.9.2`、打 tag、push；
+還沒發過版。照 tdp project 的「發布」：`make check`、CHANGELOG 的 `## Unreleased` 改成 `## vX.Y.Z — tdp v0.9.3`、打 tag、push；
 release.yml 在 ubuntu、macOS、Windows 跑測試，goreleaser 發 Homebrew tap 與 scoop bucket。`install.ps1`、`uninstall.ps1` 是 hostu 自己寫的
 （範本沒有）。
