@@ -534,8 +534,9 @@ func TestBrokenProfilesMovedAside(t *testing.T) {
 	hs.contains("moved "+path+" to "+path+".bak.1", "Made the profile default")
 }
 
-// A config.yaml hostu can't read is asked about first, then profiles.yaml;
-// Enter on the first puts a new config.yaml with the defaults in its place.
+// A config.yaml hostu can't read is asked about first, then profiles.yaml.
+// Enter on the first starts as the first time: the defaults, and no
+// config.yaml, which the first start does not make (tdp E3-18).
 func TestBrokenConfigThenProfiles(t *testing.T) {
 	t.Parallel()
 	env := sandbox(t, "profiles: [\n")
@@ -545,15 +546,19 @@ func TestBrokenConfigThenProfiles(t *testing.T) {
 	hs := start(t, env, 120, 40)
 	hs.contains(cfg+" can't be read:", "the setting input_tab_width is 0: it is at least 1", "Move it to config.yaml.bak")
 	hs.keys("Enter")
-	if b, _ := os.ReadFile(cfg); string(b) != "input_tab_width: 4\n" {
-		t.Fatalf("the new config.yaml is %q", b)
+	if _, err := os.Stat(cfg); err == nil || hs.h.a.InputTabWidth != 4 {
+		t.Fatalf("config.yaml is there (%v) or input_tab_width is %d", err, hs.h.a.InputTabWidth)
+	}
+	if b, _ := os.ReadFile(cfg + ".bak"); string(b) != "input_tab_width: 0\n" {
+		t.Fatalf("config.yaml.bak is %q", b)
 	}
 	hs.contains(filepath.Join(env.Data, "profiles.yaml")+" can't be read:", "Move it to profiles.yaml.bak")
 	hs.keys("Enter")
 	hs.lacks("MOVE ASIDE")
 	hs.contains("active: default")
 	hs.keys("!")
-	hs.contains("Wrote a new " + cfg + " with the defaults")
+	hs.contains(cfg + " to " + cfg + ".bak")
+	hs.lacks("Wrote")
 }
 
 // Asked about config.yaml at the first start, hostu has written nothing yet:

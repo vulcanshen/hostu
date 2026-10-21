@@ -176,8 +176,7 @@ On Windows `~` is `%USERPROFILE%`. `config.yaml` has one setting, shared by the 
 hosts file, point `HOSTU__HOSTS_FILE` at a copy of it.
 
 When `config.yaml` or `profiles.yaml` can't be read (say, after a change by hand), hostu asks before anything else:
-`Enter` renames it to `.bak` and starts with a new one (for the profiles, as the first time), `Esc` quits and prints
-the file and what is wrong with it.
+`Enter` renames it to `.bak` and starts as the first time, `Esc` quits and prints the file and what is wrong with it.
 
 ## Limits
 

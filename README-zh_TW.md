@@ -168,8 +168,8 @@ Windows 上的 `~` 是 `%USERPROFILE%`。`config.yaml` 只有一個設定，term
 
 `profiles.yaml` 是 hostu 自己的格式，每改一次就存一次。想試 hostu 又不想動到 hosts 檔，把 `HOSTU__HOSTS_FILE` 指到一份複本就好。
 
-`config.yaml` 或 `profiles.yaml` 讀不了時（例如手改壞了），hostu 一開始就先問：`Enter` 把它改名成 `.bak`，換一個新的開始（profile 照第一次
-打開那樣做），`Esc` 離開，印出是哪個檔、哪裡不對。
+`config.yaml` 或 `profiles.yaml` 讀不了時（例如手改壞了），hostu 一開始就先問：`Enter` 把它改名成 `.bak`，像第一次打開
+一樣開始，`Esc` 離開，印出是哪個檔、哪裡不對。
 
 ## 限制
 

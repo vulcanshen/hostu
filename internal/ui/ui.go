@@ -61,8 +61,9 @@ type hostu struct {
 	unread            []unread // to ask about once the program runs
 }
 
-// unread is a file of hostu's own it could not read, and fresh what makes a
-// new one once it is moved aside (tdp E3, when it cannot be read).
+// unread is a file of hostu's own it could not read, and fresh what hostu
+// does once it is moved aside: start as the first time, with none (tdp E3,
+// when it cannot be read).
 type unread struct {
 	path  string
 	err   error
@@ -88,7 +89,9 @@ func newHostu(env Env) *hostu {
 
 	cfg, err := config.Load(env.Config)
 	if err != nil {
-		h.unread = append(h.unread, unread{config.Path(env.Config), err, h.freshConfig})
+		// Moved aside there is none, as the first time: hostu has the
+		// defaults already and writes no config.yaml.
+		h.unread = append(h.unread, unread{config.Path(env.Config), err, func() tea.Cmd { return nil }})
 	}
 	h.a.InputTabWidth = cfg.InputTabWidth
 	h.load()
@@ -154,16 +157,6 @@ func (h *hostu) begin() tea.Cmd {
 		return h.a.Toast(terminu.Warning, say+", skipped "+count(skipped, "line"))
 	}
 	return h.a.Toast(terminu.Info, say)
-}
-
-// freshConfig is a new config.yaml with the defaults, in place of the one
-// moved aside.
-func (h *hostu) freshConfig() tea.Cmd {
-	if err := config.WriteDefault(h.env.Config); err != nil {
-		return h.a.ErrorAbout("Can't save", config.Path(h.env.Config), sentence(err))
-	}
-	h.a.Log(terminu.Info, "Wrote a new "+short(config.Path(h.env.Config))+" with the defaults")
-	return nil
 }
 
 // askUnread asks about the first file of hostu's own it could not read, and

@@ -1,6 +1,6 @@
 # hostu 開發者備忘
 
-用 profile 切換 hosts 檔的 TUI，遵循 [terminu design principle](https://github.com/vulcanshen/terminu)（tdp v0.9.1），用
+用 profile 切換 hosts 檔的 TUI，遵循 [terminu design principle](https://github.com/vulcanshen/terminu)（tdp v0.9.2），用
 terminu-go v0.4.2 做。
 
 ## 運作方式
@@ -22,7 +22,7 @@ terminu-go v0.4.2 做。
   一行（confirm 是 components「控制字元」裡的「名字與短字」，`\n` 會畫成紅色的名字），型別不對的那句改成使用者的話
   （`line 1: 3 is not a list`，不寫 Go 的型別名）。
 - **App Log**：terminu-go 內建（`!`、footer 的提醒、toast 與 error popup 自己記）；hostu 用 `App.Log` 記使用者的動作與背景做的事
-  （`hosts.original`、新的 `config.yaml`）。
+  （`hosts.original`）。
 
 ## 設計決定
 
@@ -47,9 +47,9 @@ terminu-go v0.4.2 做。
 - **profile 名稱不分大小寫不能重複**、domain 在同一個 profile 裡不分大小寫不能重複：hosts 檔的名稱不分大小寫。
 - **`profiles.yaml` 是資料**（tdp E3，hostu 回報的 HU17）：使用者寫給 app 的清單算資料，放 `~/.hostu`；設定只留 app 自己的選項。
   hostu 還沒發過版，沒有寫搬家。
-- **讀不了的 `profiles.yaml` 換新的時照第一次打開**（tdp E3「讀不了時」的「建一個新的」）：hostu 沒有 profile 的時候本來就把 hosts 檔讀成
-  `default`，搬開之後也一樣，生效的 profile 一開始就對得上 hosts 檔。hosts 檔也讀不到時不建，第一次存檔才有檔。terminu 判過
-  （2026-10-20）：「從空的開始」就是像第一次打開一樣。
+- **讀不了的檔搬開之後照第一次打開**（tdp E3-18）：hostu 沒有 profile 的時候本來就把 hosts 檔讀成 `default`，搬開之後也一樣，生效的
+  profile 一開始就對得上 hosts 檔；hosts 檔也讀不到時不建，第一次存檔才有檔。`config.yaml` 第一次打開不建（hostu 沒有改設定的地方），
+  搬開之後也不建，用預設值。
 - **hosts 檔讀不到時開 error popup**：hosts 檔不是 hostu 自己的檔（tdp E3：照常開著）；hostu 沒有顯示 hosts 檔的 panel，只有 statusbar
   的 `(can't read)`，所以照 tdp F5 開 error popup 寫原因（自己會記進 App Log）。terminu 判過（2026-10-20）：沒有 panel 時照 F5。
 - **`input_tab_width` 留著**：preview 的 viewer 用到（tdp E3-11：只有 App Log 的 app 才不用）。preview 的內容現在不會有 Tab，照樣留：
@@ -93,6 +93,6 @@ terminu-go v0.4.2 做。
 
 ## 發布
 
-還沒發過版。照 tdp project 的「發布」：`make check`、CHANGELOG 的 `## Unreleased` 改成 `## vX.Y.Z — tdp v0.9.1`、打 tag、push；
+還沒發過版。照 tdp project 的「發布」：`make check`、CHANGELOG 的 `## Unreleased` 改成 `## vX.Y.Z — tdp v0.9.2`、打 tag、push；
 release.yml 在 ubuntu、macOS、Windows 跑測試，goreleaser 發 Homebrew tap 與 scoop bucket。`install.ps1`、`uninstall.ps1` 是 hostu 自己寫的
 （範本沒有）。

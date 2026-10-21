@@ -19,6 +19,6 @@ Each release names the version of terminu design (tdp) it follows.
   another hosts file to write; `config.yaml` takes `input_tab_width`.
 - A `profiles.yaml` changed by hand is checked as it is read: a name with a control character, two profiles of one
   name, a domain or an address a hosts file can't take. When it, or `config.yaml`, can't be read, hostu asks first:
-  `Enter` renames it to `.bak` and starts with a new one, `Esc` quits and prints what is wrong.
+  `Enter` renames it to `.bak` and starts as the first time, `Esc` quits and prints what is wrong.
 - `!` opens the App Log: every message hostu showed, what you did and what hostu did by itself, while it has been
   open.

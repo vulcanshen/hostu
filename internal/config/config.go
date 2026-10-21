@@ -47,12 +47,3 @@ func Load(dir string) (Config, error) {
 	}
 	return c, nil
 }
-
-// WriteDefault writes config.yaml in dir with the defaults: the new one in
-// place of one that could not be read (tdp E3).
-func WriteDefault(dir string) error {
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(Path(dir), fmt.Appendf(nil, "input_tab_width: %d\n", Default.InputTabWidth), 0o644)
-}

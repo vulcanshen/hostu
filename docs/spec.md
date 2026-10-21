@@ -1,6 +1,6 @@
 # hostu 規格
 
-照 terminu design（tdp v0.9.1）用 terminu-go v0.4.2 做。畫面、按鍵、外框、顏色、popup 的開關這些 tdp 已經規定的不寫在這裡，
+照 terminu design（tdp v0.9.2）用 terminu-go v0.4.2 做。畫面、按鍵、外框、顏色、popup 的開關這些 tdp 已經規定的不寫在這裡，
 照 tdp 做。
 
 ## 一句話
@@ -100,8 +100,8 @@ Space:menu ?:help !:log Tab|1–2:panels q:quit
 `!` 打開（tdp dialog/note，terminu-go 內建；toast 與 error popup 自己會記進去）。hostu 另外記：
 
 - 使用者做的事與結果（OK）：新增、改名、複製、刪除 profile，新增、儲存、刪除 domain。啟用有 Success toast，不另外記。
-- hostu 自己做的事（INFO）：第一次寫 hosts 檔之前留下 `hosts.original`、讀不了的檔換成新的 `config.yaml`（「讀不了時」）。
-  第一次打開建 `default` 有 toast，搬開讀不了的檔由 terminu-go 記。
+- hostu 自己做的事（INFO）：第一次寫 hosts 檔之前留下 `hosts.original`。第一次打開建 `default` 有 toast，搬開讀不了的檔
+  （「讀不了時」）由 terminu-go 記。
 
 ## 啟用
 
@@ -138,8 +138,8 @@ Windows 上 `~` 是 `%USERPROFILE%`（tdp E3）。沒有狀態與快取要存。
 - `config.yaml` 或 `profiles.yaml` 讀不了（格式錯、`profiles.yaml` 的內容檢查不過、權限……）：啟動時開 `MOVE ASIDE` confirm，寫出路徑與
   原因（yaml 的錯拿掉開頭的 `yaml:`，接成一行，型別不對寫成 `line 1: 3 is not a list`）。兩個都讀不了時先問 `config.yaml`，搬好再問
   `profiles.yaml`。都問完 hostu 才開始（讀 hosts 檔、第一次打開時建 `default`），所以按 `Esc` 時什麼都還沒寫。
-  - `Enter`：改名成 `.bak`（已有就 `.bak.1`、`.bak.2`…），換一個新的：`config.yaml` 寫一份預設值；`profiles.yaml` 照第一次打開，把 hosts 檔
-    讀成 `default`。
+  - `Enter`：改名成 `.bak`（已有就 `.bak.1`、`.bak.2`…），像第一次打開一樣開始（tdp E3-18）：`config.yaml` 不另外建，用預設值（第一次
+    打開也不建）；`profiles.yaml` 把 hosts 檔讀成 `default` 存起來。
   - `Esc`：離開 hostu，路徑與原因印到 stderr。
 - hosts 檔讀不到：不是 hostu 自己的檔，hostu 照常開著；啟動時開 error popup 寫原因（記進 App Log），statusbar 寫 `(can't read)`。
 
