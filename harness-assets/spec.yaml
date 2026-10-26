@@ -1,0 +1,188 @@
+id: 1
+from: 0
+to: v0.10.2
+tasks:
+  - id: 1
+    spec: 1
+    request: 一個畫面：最上面一列 statusbar，下面兩個 panel，`[1] PROFILES` 是存著的 profile，`[2] DOMAINS` 是一個 profile 的 domain
+    tdp: [tdp screen.1, tdp screen.2, tdp panel.1, tdp panel.4, tdp L1, tdp components.4, tdp components.5]
+    remark:
+      - 單畫面，不要畫面 chip 列；最上面一列放 statusbar（tdp screen.1、tdp screen.4：要不要有 app 可以自行決定）
+      - panel 怎麼拆 app 可以自行決定（tdp L1）：左邊 profile 清單、右邊那個 profile 的 domain
+      - |
+        版面（README 的 demo gif，8c5b006 錄的；footer 照 tdp screen.2，gif 錄的時候還沒有 App Log）：
+        hosts: /etc/hosts  active: default
+        ┏[1] PROFILES━━━━━━━━━━━━━━━━━━━━━━┓┌[2] DOMAINS: office──────────────────┐
+        ┃  NAME           DOMAINS          ┃│ DOMAIN           ADDRESSES          │
+        ┃ ✓default              2          ┃│ localhost        127.0.0.1, ::1     │
+        ┃  office               3          ┃│ git.corp.local   10.1.2.3           │
+        ┃  client site          2          ┃│ wiki.corp.local  10.1.2.4           │
+        ┗━ Enter:activate p:preview n:new ━┛└─ Enter:edit n:new ──────────────────┘
+        Space:menu ?:help !:log Tab|1–2:panels q:quit
+  - id: 2
+    spec: 1
+    request: 終端機至少 80 欄寬、24 列高；比這小時只畫名稱與需要的大小，終端機拉大就回到原本的樣子
+    tdp: [tdp L1, tdp screen.7, tdp L4, tdp E5, tdp E8]
+    remark:
+      - 最低尺寸 80×24（tdp L1：要不要調低 app 可以自行決定，不能高於 80×40）
+  - id: 3
+    spec: 1
+    request: 需要 Nerd Font 與 truecolor 的終端機；icon 與 powerline 符號各佔幾格啟動時量，量錯時可以用環境變數自己設（HOSTU__、TERMINU__、LC_TERMINU_ 開頭的 ICON_WIDTH 與 POWERLINE_WIDTH）
+    tdp: [tdp E4, tdp E5, tdp E2, tdp E7, tdp E8]
+    remark:
+      - 量與讀環境變數由 terminu-go 做（tdp E8）；README 的需求段寫明（tdp E4、tdp E7）
+  - id: 4
+    spec: 1
+    request: 命令列：`hostu` 啟動，`hostu version`（`-v`、`--version`）印出版本，`hostu help`（`-h`、`--help`）印出命令列的用法
+    tdp: [tdp E1, tdp project.4]
+  - id: 5
+    spec: 1
+    request: "`[1] PROFILES` 列出存著的 profile；一次一個生效，綠色的勾標出 hosts 檔現在是哪一個"
+    tdp: [tdp panel.5, tdp panel.15, tdp screen.8, tdp P5]
+    remark:
+      - 生效中的那一個名稱前面畫綠色的勾（tdp P5：領域的符號與顏色 app 可以自行決定）
+      - 兩欄：NAME 可以截短，DOMAINS 是數字靠右、寬度不變（tdp panel.5）
+  - id: 6
+    spec: 1
+    request: "`[2] DOMAINS` 是一個 profile 的 domain，每個 domain 一筆；一個 domain 可以指到好幾個位址（IPv4 與 IPv6）"
+    tdp: [tdp panel.13, tdp panel.5, tdp screen.8, tdp components.4]
+    remark:
+      - "跟著 [1] 的 cursor 換成那個 profile 的 domain（tdp panel.13），label 帶 profile 的名字 `[2] DOMAINS: office`（tdp components.4）"
+      - 兩欄：DOMAIN、ADDRESSES，一個 domain 的好幾個位址寫在同一格（tdp P5：內容怎麼排是領域的事）
+  - id: 7
+    spec: 1
+    request: statusbar 寫 hosts 檔與生效中的 profile；hosts 檔跟生效中的 profile 對不上時（之後改了 profile，或別的程式寫過 hosts 檔），statusbar 會說
+    tdp: [tdp screen.4, tdp L2, tdp P5]
+    remark:
+      - 寫什麼是 app 的內容（tdp screen.4、tdp P5）；欄位寬度固定，生效中的 profile 放最後（tdp L2）
+  - id: 8
+    spec: 1
+    request: 第一次打開時，hostu 把 hosts 檔讀成叫 `default` 的 profile，標成生效中（hosts 檔就是它），存進 `profiles.yaml`；啟用 profile 之前不寫 hosts 檔
+    tdp: [tdp E3, tdp P5, tdp toast.2, tdp note.7]
+    remark:
+      - 怎麼把 hosts 檔讀成 profile 是功能邏輯（tdp P5）；profiles.yaml 是第一次打開就建的檔，config.yaml 不建（tdp E3）
+      - 有跳過的行時用 Warning toast 說跳過了幾行（tdp toast.2：做完了但有值得注意的地方）
+  - id: 9
+    spec: 1
+    request: 在 `[1] PROFILES` 按 `Enter` 啟用這個 profile：先問，寫出會寫幾個 domain，沒有 `localhost` 時警告；接受了才寫進 hosts 檔
+    tdp: [tdp K3, tdp F6, tdp confirm, tdp toast.2, tdp note.7, tdp T1]
+    remark:
+      - profile 上最直觀的事就是啟用（tdp K3）；要先問（tdp F6：哪些動作要 confirm app 可以自行決定）
+      - 沒有 localhost 的那一句是警告，用 Peach（tdp confirm.2：哪一句算警告 app 可以自行決定）
+  - id: 10
+    spec: 1
+    request: 用自己的帳號跑 hostu；hosts 檔要管理員才寫得了時，sudo 在 hostu 裡的終端機問密碼（Windows 是系統的 UAC 視窗）。macOS、Linux 用 `sudo` 或 `doas`，Windows 用 `gsudo` 或 Windows 11 的 `sudo`
+    tdp: [tdp terminal.7, tdp terminal.4, tdp K10, tdp F1]
+    remark:
+      - 照 tdp terminal.7：先試不用密碼的，要密碼才開 terminal popup 讓工具自己問；用哪個工具依平台 app 可以自行決定
+  - id: 11
+    spec: 1
+    request: 舊的 hosts 檔留著：hostu 第一次寫 hosts 檔之前，先把它原樣留一份（`~/.hostu/hosts.original`）
+    tdp: [tdp E3, tdp P5]
+    remark:
+      - app 替使用者記下的原值是資料，放資料目錄（tdp E3）
+  - id: 12
+    spec: 1
+    request: 在 `[1] PROFILES` 按 `p` 預覽這個 profile 會寫成的 hosts 檔
+    tdp: [tdp P5, tdp M5, tdp K12, tdp note.1, tdp note.2, tdp note.3, tdp note.4]
+    remark:
+      - "`p` 是領域熱鍵（tdp P5）：在 Space menu 裡、用 [] 標出（tdp M5），不佔移動的字母（tdp K12）"
+      - 預覽是唯讀的內容，用 viewer（tdp note）
+  - id: 13
+    spec: 1
+    request: 在 `[1] PROFILES` 按 `r` 改這個 profile 的名字
+    tdp: [tdp P5, tdp M5, tdp K12, tdp input.2, tdp input.5, tdp text, tdp popup.7, tdp note.6]
+    remark:
+      - 名字合不合規則是功能邏輯（tdp P5），不合時寫在 input popup 的錯誤列（tdp popup.7）；存檔失敗開 error popup，input popup 留著（tdp note.6）
+  - id: 14
+    spec: 1
+    request: 在 `[1] PROFILES` 按 `c` 把這個 profile 複製成一個新的 profile
+    tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp input.2, tdp input.6, tdp text, tdp popup.7]
+    remark:
+      - 新增之後 cursor 移到新的那一項（tdp K3）
+  - id: 15
+    spec: 1
+    request: 在 `[1] PROFILES` 按 `D` 刪掉這個 profile，先問；生效中的不能刪
+    tdp: [tdp P5, tdp M5, tdp K12, tdp F6, tdp confirm, tdp M6, tdp T1]
+    remark:
+      - 生效中的 profile 上，刪除照停用畫（tdp M6：對象存在、但現在不能執行）
+  - id: 16
+    spec: 1
+    request: 在 `[1] PROFILES` 按 `n` 新增一個空的 profile
+    tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp input.2, tdp input.6, tdp text, tdp popup.7]
+    remark:
+      - 新增之後 cursor 移到新的那一項（tdp K3）
+  - id: 17
+    spec: 1
+    request: 在 `[1] PROFILES` 按 `i` 把 hosts 檔現在的內容讀成一個新的 profile
+    tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp toast.2]
+    remark:
+      - 有跳過的行時用 Warning toast 說跳過了幾行（tdp toast.2）；新增之後 cursor 移到新的那一項（tdp K3）
+  - id: 18
+    spec: 1
+    request: 在 `[2] DOMAINS` 按 `n` 新增 domain：NEW DOMAIN 表單，一個 domain 一筆；Addresses 可以一次打好幾個位址，用空白隔開（`10.1.2.3 fd00::3`）；名稱與位址打錯當場就擋下來
+    tdp: [tdp form, tdp input.2, tdp text, tdp popup.7, tdp P5, tdp M5, tdp K12, tdp K3]
+    remark:
+      - 名稱與位址合不合規則是功能邏輯（tdp P5），擋在那一欄的 input popup（tdp form.16、tdp popup.7）
+      - 兩欄 Domain、Addresses，按鈕寫 Add（tdp form.7：按鈕上寫按下去要做的事）
+  - id: 19
+    spec: 1
+    request: 在 `[2] DOMAINS` 按 `Enter` 編輯這個 domain 與它的位址
+    tdp: [tdp K3, tdp form, tdp input.2, tdp input.5, tdp text, tdp popup.7]
+    remark:
+      - domain 上最直觀的事是編輯（tdp K3）；表單的標題帶它的名字（tdp form.3）
+  - id: 20
+    spec: 1
+    request: 在 `[2] DOMAINS` 按 `D` 刪掉這個 domain，先問
+    tdp: [tdp P5, tdp M5, tdp K12, tdp F6, tdp confirm, tdp T1]
+  - id: 21
+    spec: 1
+    request: profile 存在 `~/.hostu/profiles.yaml`（`HOSTU__DATA` 改位置），是 hostu 自己的格式，每改一次就存一次；改 profile 只改這個檔
+    tdp: [tdp E3, tdp E2, tdp P5]
+    remark:
+      - 使用者寫給 app 用的清單是資料（tdp E3）；檔案格式是功能邏輯（tdp P5）
+  - id: 22
+    spec: 1
+    request: 設定 `config.yaml` 在 `$XDG_CONFIG_HOME/hostu`（沒設就是 `~/.config/hostu`，`HOSTU__CONFIG` 改位置），只有一個設定，家族共用的 `input_tab_width`：hostu 顯示的文字裡 Tab 畫成幾格空白，預設 4
+    tdp: [tdp E3, tdp E2, tdp E7, tdp components.5]
+  - id: 23
+    spec: 1
+    request: hostu 寫的 hosts 檔是 `/etc/hosts`，Windows 是 `%SystemRoot%\System32\drivers\etc\hosts`；`HOSTU__HOSTS_FILE` 可以指到別的檔（例：一份複本，想試 hostu 又不想動到 hosts 檔）
+    tdp: [tdp E2, tdp P5]
+  - id: 24
+    spec: 1
+    request: hostu 照 profile 寫整個 hosts 檔，自己在 hosts 檔寫的註解與內容不會留在裡面；hosts 檔裡不是「位址加名稱」的行（打錯的、不認得的位址）不會讀進 profile，hostu 會說跳過了幾行
+    tdp: [tdp P5]
+    remark:
+      - hosts 檔怎麼讀、怎麼寫是功能邏輯（tdp P5）
+  - id: 25
+    spec: 1
+    request: hostu 不監看 hosts 檔：啟動時與寫完之後才讀
+    tdp: [tdp P5, tdp E3, tdp panel.15, tdp F5]
+    remark:
+      - hosts 檔是 app 外面的東西：讀不到時 app 照常開著，照 tdp panel.15 寫，細節記進 App Log（tdp E3 的「讀不了時」、tdp F5）
+  - id: 26
+    spec: 1
+    request: "`config.yaml` 或 `profiles.yaml` 讀不了時（例如手改壞了），hostu 一開始就先問：`Enter` 把它改名成 `.bak`，像第一次打開一樣開始，`Esc` 離開，印出是哪個檔、哪裡不對"
+    tdp: [tdp E3, tdp confirm, tdp confirm.3]
+  - id: 27
+    spec: 1
+    request: 按 `!` 打開 App Log：這次打開以來 hostu 做了什麼、哪裡出了問題
+    tdp: [tdp note.7, tdp F5, tdp K1, tdp screen.2, tdp toast.2]
+  - id: 28
+    spec: 1
+    request: 按 `q` 離開
+    tdp: [tdp K9, tdp M4]
+  - id: 29
+    spec: 1
+    request: 家族的 splash：在 panel 上按 `V` 打開，畫 hostu 的家族 mark（`docs/icon.svg`）
+    tdp: [tdp S1, tdp S2, tdp S3, tdp S4, tdp S5, tdp E6]
+    remark:
+      - README 沒寫：splash 不揭露（tdp S2）。這個 task 是從測試 TestSplashIsDocsIcon 來的
+  - id: 30
+    spec: 1
+    request: 安裝：Homebrew、Scoop（Windows）、安裝腳本（不用 sudo，裝到 `~/.local/bin`；Windows 在 PowerShell 裡）、`go install`。移除：Homebrew 或移除腳本，刪 profile 與舊 hosts 檔的副本之前先問；移除 hostu 不動 hosts 檔
+    tdp: [tdp E6, tdp project.2, tdp project.3, tdp project.7]
+    remark:
+      - install.sh、uninstall.sh 照 tdp project.2 的範本（範本的 app's own 段落 app 自己改）；移除腳本問了才刪資料目錄是範本本來的做法
+      - 出 Windows 版：install.ps1、uninstall.ps1 怎麼寫 app 可以自行決定（tdp project.3），Scoop bucket 照 tdp project.7

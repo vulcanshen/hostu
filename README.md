@@ -189,7 +189,6 @@ When `config.yaml` or `profiles.yaml` can't be read (say, after a change by hand
 ## Links
 
 - [CHANGELOG](CHANGELOG.md)
-- [Developer notes](docs/dev-remarks.md) (in Traditional Chinese)
 
 ## The terminu family
 

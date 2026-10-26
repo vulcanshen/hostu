@@ -181,7 +181,6 @@ Windows 上的 `~` 是 `%USERPROFILE%`。`config.yaml` 只有一個設定，term
 ## 相關連結
 
 - [CHANGELOG](CHANGELOG.md)
-- [開發者備忘](docs/dev-remarks.md)
 
 ## terminu 家族
 

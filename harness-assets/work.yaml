@@ -1,0 +1,206 @@
+tasks:
+  - id: 1
+    spec: 1
+    implementation: |
+      單畫面：最上面一列 statusbar（task 7），左 [1] PROFILES、右 [2] DOMAINS: <profile>，最下面 terminu-go 的 footer（README 的 demo gif，8c5b006 錄的）
+      panel 的 hint：[1] Enter:activate p:preview n:new；[2] Enter:edit n:new（demo gif）
+      窄的時候怎麼排：不知道（README 沒寫，gif 只有寬的畫面）
+      tdptest 走遍 app 驗畫面的規定，一般的值與帶控制字元的值各走一次（e0dd1cd）
+    test: [TestTDP, TestTDPWithTrickyValues]
+  - id: 2
+    spec: 1
+    implementation: |
+      最低尺寸 80×24：比這小時只畫名稱與需要的大小，拉大回到原本的畫面（README）
+      每種尺寸、每種 icon 寬度下每一列都等於終端機寬度；toast、error popup、sudo 的 terminal popup 都量（9080664）
+      popup 比畫面大時：不知道（測試名稱是 TestE5PopupBiggerThanTheScreen）
+    test: [TestL1BelowTheLeastSize, TestL4EveryLineIsTheTerminalsWidth, TestE5PopupBiggerThanTheScreen]
+  - id: 3
+    spec: 1
+    implementation: |
+      icon 與 powerline 符號的寬度由 terminu-go 啟動時量，覆寫照 HOSTU__ → TERMINU__ → LC_TERMINU_ 的順序讀（README）
+      README 的需求段寫 Nerd Font、truecolor 與六個變數
+    test:
+      - commit: 8c5b006
+  - id: 4
+    spec: 1
+    implementation: |
+      hostu 啟動；hostu version（-v、--version）印出版本；hostu help（-h、--help）印出命令列的用法（README）
+      本機 build 時印什麼：不知道
+    test:
+      - commit: 8c5b006
+  - id: 5
+    spec: 1
+    implementation: |
+      [1] PROFILES 是 terminu-go 的清單：NAME、DOMAINS 兩欄，DOMAINS 是 domain 的數目、靠右（demo gif）
+      生效中的那一個名稱前面畫綠色的勾（Row.Styled，e0dd1cd）
+      名稱太長時截短，DOMAINS 的寬度不變（91cc4f3）
+      順序：不知道（gif 上是 default、office、client site）
+      空的時候、讀不到的時候寫什麼：不知道
+    test: [TestLongNameIsCut]
+  - id: 6
+    spec: 1
+    implementation: |
+      [2] DOMAINS: <profile 的名字>：DOMAIN、ADDRESSES 兩欄，一個 domain 的好幾個位址用「, 」接在同一格（demo gif：127.0.0.1, ::1）
+      跟著 [1] 的 cursor 換成那個 profile 的 domain（demo gif）
+      順序：不知道（gif 上新加的排在最後）
+      空的時候寫什麼：不知道
+    test:
+      - commit: 8c5b006
+  - id: 7
+    spec: 1
+    implementation: |
+      statusbar：hosts: <hosts 檔的路徑>  active: <生效中的 profile>（demo gif）
+      路徑後面的狀態補成固定寬，生效中的 profile 放最後（9080664）；statusbar 由 spans 組成（e0dd1cd）
+      hosts 檔跟生效中的 profile 對不上時寫的字：不知道
+    test: [TestStatusSaysTheHostsFileDiffers]
+  - id: 8
+    spec: 1
+    implementation: |
+      啟動時沒有 profiles.yaml：讀 hosts 檔成 default，標成生效中，存進 ~/.hostu/profiles.yaml（README、e0dd1cd）
+      不寫 hosts 檔（README），不建 config.yaml（2b78611）
+      有跳過的行時，第一次打開的 toast 是 Warning，寫跳過了幾行（e0dd1cd）；沒跳過時的 toast：不知道
+    test: [TestFirstStartMakesDefault, TestFirstStartSaysWhatItSkipped]
+  - id: 9
+    spec: 1
+    implementation: |
+      [1] 的 Enter：開 confirm，內容寫 hosts 檔會變成幾個 domain（demo gif：The hosts file becomes the 4 domains of office.），沒有 localhost 時多一句警告（README）
+      confirm 的標題、問句、警告的字、Space menu 裡那一列：不知道
+      Enter：寫 hosts 檔（怎麼寫見 task 10），toast「Wrote office to /etc/hosts」（184ac4b，toast 的種類：不知道），App Log 照記；statusbar 的 active 換成它（demo gif）
+      Esc：不寫（README）
+    test: [TestActivateWritesTheHostsFile, TestActivateEscWritesNothing, TestActivateWarnsWithoutLocalhost]
+  - id: 10
+    spec: 1
+    implementation: |
+      寫 hosts 檔：hostu 自己寫得了就直接寫；寫不了時先試不問密碼的 sudo；要密碼時開 terminal popup 跑 sudo（沒有就 doas），讓它在 hostu 裡的終端機問（README、8c5b006）
+      Windows：gsudo 或 Windows 11 的 sudo，系統跳 UAC（README）
+      都沒有、或寫失敗時：不知道（測試有 TestWriteNoSudo）
+    test: [TestWriteItself, TestWriteSudoWithoutAsking, TestWriteSudoWantsAPassword, TestWriteNoSudo, TestWriteWindows, TestSudoAsksInATerminal]
+  - id: 11
+    spec: 1
+    implementation: |
+      第一次寫 hosts 檔之前，把它原樣留到 ~/.hostu/hosts.original（HOSTU__DATA 改位置）（README、e0dd1cd）；App Log 記一筆（e0dd1cd）
+      已經有 hosts.original 時：不知道
+    test:
+      - commit: 8c5b006
+      - commit: e0dd1cd
+  - id: 12
+    spec: 1
+    implementation: |
+      [1] 的 p：開 viewer，內容是這個 profile 會寫成的 hosts 檔（README）
+      viewer 的標題、Space menu 裡那一列：不知道
+    test: [TestPreview]
+  - id: 13
+    spec: 1
+    implementation: |
+      [1] 的 r：開改名的 input popup（README）；標題、有沒有舊值的灰字提議、名字的規則與錯誤的字：不知道
+      在確定時存檔：存失敗時 input popup 留著、值還在，error popup 蓋在上面（9080664）
+      改的是生效中的 profile 時：不知道（測試名稱是 TestRenameTheActiveProfile）
+    test: [TestRenameTheActiveProfile, TestSaveFailsKeepsTheInput]
+  - id: 14
+    spec: 1
+    implementation: |
+      [1] 的 c：開名字的 input popup，確定後加一個內容一樣的新 profile（README）；在確定時存檔（9080664）
+      建議的名字、新的 profile 排在哪、cursor 停在哪：不知道
+    test: [TestCopyProfile]
+  - id: 15
+    spec: 1
+    implementation: |
+      [1] 的 D：先問（README），接受才刪；生效中的不能刪（README）
+      confirm 的字、生效中的那一個上按 D 或 Space menu 怎麼畫：不知道
+    test: [TestDeleteProfile]
+  - id: 16
+    spec: 1
+    implementation: |
+      [1] 的 n：開名字的 input popup，確定後加一個空的 profile（README）；在確定時存檔（9080664）
+      標題、建議的名字、cursor 停在哪：不知道
+    test: [TestNewProfile]
+  - id: 17
+    spec: 1
+    implementation: |
+      [1] 的 i：把 hosts 檔現在的內容讀成一個新的 profile（README）；有跳過的行時 Warning toast 寫跳過了幾行（9080664）
+      新的 profile 叫什麼、cursor 停在哪：不知道
+    test: [TestImportTheHostsFile]
+  - id: 18
+    spec: 1
+    implementation: |
+      [2] 的 n：開 NEW DOMAIN 表單（terminu-go 的表單），Domain、Addresses 兩欄左右式，按鈕 Add（demo gif）
+      Domain、Addresses 各在 input popup 裡打；Addresses 可以一次打好幾個，用空白隔開（README）
+      名稱與位址打錯時擋在 input popup（README「當場就擋下來」）；錯誤的字：不知道
+      Add：加進 [1] cursor 那個 profile、存 profiles.yaml（README）；沒填、domain 重複時：不知道
+    test: [TestNewDomain, TestCheckDomain, TestAddresses]
+  - id: 19
+    spec: 1
+    implementation: |
+      [2] 的 Enter：開表單編輯這個 domain 與它的位址（README），送出後改掉那一筆、存 profiles.yaml
+      表單的標題與按鈕：不知道
+    test: [TestEditDomain]
+  - id: 20
+    spec: 1
+    implementation: |
+      [2] 的 D：先問（README），接受才刪、存 profiles.yaml
+      confirm 的字：不知道
+    test: [TestDeleteDomain]
+  - id: 21
+    spec: 1
+    implementation: |
+      profiles.yaml 在 ~/.hostu（HOSTU__DATA 改位置），每改一次就存一次（README、e0dd1cd）
+      讀進來時檢查：名字裡沒有控制字元、名字不重複、domain 與位址是 hosts 檔收的（9080664）
+    test: [TestSaveAndLoad, TestLoadChecksWhatIsInIt, TestTakenAndRemove]
+  - id: 22
+    spec: 1
+    implementation: |
+      config.yaml 在 $XDG_CONFIG_HOME/hostu，沒設就是 ~/.config/hostu（HOSTU__CONFIG 改位置）；只有 input_tab_width，預設 4（README）
+      第一次打開不建 config.yaml，使用者自己寫了才有（2b78611）
+    test: [TestLoad]
+  - id: 23
+    spec: 1
+    implementation: |
+      hosts 檔：/etc/hosts，Windows 是 %SystemRoot%\System32\drivers\etc\hosts；HOSTU__HOSTS_FILE 改（README）
+    test:
+      - commit: 8c5b006
+  - id: 24
+    spec: 1
+    implementation: |
+      讀：一行「位址加名稱」收成 domain 與它的位址；不是的行跳過、算進跳過的行數（README）
+      寫：照 profile 寫整個檔（README）；寫出來的檔長什麼樣（註解、排法）：不知道
+    test: [TestParse, TestFormatReadsBack]
+  - id: 25
+    spec: 1
+    implementation: |
+      啟動時讀 hosts 檔，寫完之後再讀一次（README），拿來跟生效中的 profile 比（task 7）
+      讀不了時：不知道（測試名稱是 TestHostsFileCantBeRead）
+    test: [TestHostsFileCantBeRead]
+  - id: 26
+    spec: 1
+    implementation: |
+      啟動時 config.yaml 或 profiles.yaml 讀不了：開 MOVE ASIDE 的 confirm，一次一個（e0dd1cd）；問句「Move it to <name>.bak and start fresh?」（0215cc7，terminu-go v0.4.4）
+      寫出路徑與原因：原因不帶「yaml: 」、在一列，值的種類不對時用使用者的話說（e0dd1cd）
+      Enter：改名成 .bak（有了就 .bak.1…）（e0dd1cd）；config.yaml 照預設、不建新的（2b78611）；profiles.yaml 像第一次打開一樣建（e0dd1cd）；App Log 記「Moved … to …」（184ac4b）
+      Esc：離開，原因寫到 stderr；在這之前什麼都不寫（e0dd1cd）
+    test: [TestBrokenProfilesEscQuits, TestBrokenProfilesMovedAside, TestBrokenConfigThenProfiles, TestBrokenConfigAtTheFirstStart, TestLoadBroken]
+  - id: 27
+    spec: 1
+    implementation: |
+      !：terminu-go 的 App Log（e0dd1cd）
+      記：使用者對 profile 與 domain 做的事、hosts 檔原樣留了一份，toast 與 error popup 照記（e0dd1cd）
+      每一筆開頭大寫，名稱照原樣（184ac4b）
+    test: [TestAppLog]
+  - id: 28
+    spec: 1
+    implementation: |
+      q：離開（README）；直接離開還是先問：不知道
+    test: [TestQuit]
+  - id: 29
+    spec: 1
+    implementation: |
+      V：terminu-go 的 splash，畫程式裡那份家族 mark；測試守住它跟 docs/icon.svg 一樣（測試名稱）
+    test: [TestSplashIsDocsIcon]
+  - id: 30
+    spec: 1
+    implementation: |
+      install.sh、uninstall.sh、install.ps1、uninstall.ps1、.goreleaser.yaml（Homebrew tap、Scoop bucket）（8c5b006）；e0dd1cd 改了 uninstall.ps1 與 Homebrew caveats 寫的位置
+      移除腳本刪 profile 與 hosts.original 之前先問；移除 hostu 不動 hosts 檔（README）
+      跟 tdp 的範本差在哪：不知道
+    test:
+      - commit: 8c5b006
+      - commit: e0dd1cd
