@@ -190,8 +190,10 @@ func (h *hostu) deleteProfile(p *profile.Profile) tea.Cmd {
 	return nil
 }
 
-// preview shows the hosts file p writes, as it writes it.
+// preview shows the hosts file p writes, as it writes it. Only looking is
+// logged too (tdp note.7).
 func (h *hostu) preview(p *profile.Profile) tea.Cmd {
+	h.a.Log(terminu.Info, "Previewed the profile "+p.Name)
 	text := strings.ReplaceAll(hosts.Format(p.Name, p.Domains), "\r", "")
 	return h.a.Viewer(&terminu.Viewer{Title: "Hosts file", Subject: p.Name, Glyph: glyphHosts,
 		Lines: strings.Split(strings.TrimSuffix(text, "\n"), "\n")})

@@ -1,14 +1,15 @@
-id: 1
-from: 0
-to: v0.10.2
+id: 2
+from: v0.10.2
+to: v0.11.2
 tasks:
   - id: 1
-    spec: 1
+    spec: 2
     request: 一個畫面：最上面一列 statusbar，下面兩個 panel，`[1] PROFILES` 是存著的 profile，`[2] DOMAINS` 是一個 profile 的 domain
     tdp: [tdp screen.1, tdp screen.2, tdp panel.1, tdp panel.4, tdp L1, tdp components.4, tdp components.5]
     remark:
       - 單畫面，不要畫面 chip 列；最上面一列放 statusbar（tdp screen.1、tdp screen.4：要不要有 app 可以自行決定）
       - panel 怎麼拆 app 可以自行決定（tdp L1）：左邊 profile 清單、右邊那個 profile 的 domain
+      - "[1] 佔寬的三分之一：60 欄時 [1] 20、[2] 40，兩個 panel 照常並排（tdp L1：60×32 下所有 panel 照常並排，1:2 是 20｜40）"
       - |
         版面（README 的 demo gif，8c5b006 錄的；footer 照 tdp screen.2，gif 錄的時候還沒有 App Log）：
         hosts: /etc/hosts  active: default
@@ -20,11 +21,13 @@ tasks:
         ┗━ Enter:activate p:preview n:new ━┛└─ Enter:edit n:new ──────────────────┘
         Space:menu ?:help !:log Tab|1–2:panels q:quit
   - id: 2
-    spec: 1
-    request: 終端機至少 80 欄寬、24 列高；比這小時只畫名稱與需要的大小，終端機拉大就回到原本的樣子
-    tdp: [tdp L1, tdp screen.7, tdp L4, tdp E5, tdp E8]
+    spec: 2
+    request: 終端機至少 60 欄寬、24 列高；比這小時只畫名稱、需要的大小與怎麼離開，終端機拉大就回到原本的樣子
+    tdp: [tdp L1, tdp screen.7, tdp screen.5, tdp L4, tdp E5, tdp E8]
     remark:
-      - 最低尺寸 80×24（tdp L1：要不要調低 app 可以自行決定，不能高於 80×40）
+      - 最低尺寸 60×24（tdp L1：要不要調低 app 可以自行決定，不能高於 60×32）：寬照標準，高 24 是新開的終端機常見的高度
+      - 沒有窄寬的排法：最低尺寸就是 60 欄，窄寬的門檻不能高於 60（tdp screen.5），最低尺寸以上兩個 panel 都畫
+      - hostu 2026-10-27 用 SendMessage 回報 terminu session 的兩項，tdp v0.11.0 照著改了：比最低尺寸小時多一列怎麼離開（terminu-go 畫）；標準尺寸改成 60×32
   - id: 3
     spec: 1
     request: 需要 Nerd Font 與 truecolor 的終端機；icon 與 powerline 符號各佔幾格啟動時量，量錯時可以用環境變數自己設（HOSTU__、TERMINU__、LC_TERMINU_ 開頭的 ICON_WIDTH 與 POWERLINE_WIDTH）
@@ -56,7 +59,7 @@ tasks:
     remark:
       - 寫什麼是 app 的內容（tdp screen.4、tdp P5）；欄位寬度固定，生效中的 profile 放最後（tdp L2）
   - id: 8
-    spec: 1
+    spec: 2
     request: 第一次打開時，hostu 把 hosts 檔讀成叫 `default` 的 profile，標成生效中（hosts 檔就是它），存進 `profiles.yaml`；啟用 profile 之前不寫 hosts 檔
     tdp: [tdp E3, tdp P5, tdp toast.2, tdp note.7, tdp note.6, tdp F5, tdp toast.1]
     remark:
@@ -64,76 +67,77 @@ tasks:
       - 啟動時存不了 profiles.yaml、讀不了 hosts 檔用 error popup：啟動時的讀寫不是 toast.1 寫到的兩種失敗，用哪一種 app 可以自行決定（tdp F5、tdp toast.1）
       - 有跳過的行時用 Warning toast 說跳過了幾行（tdp toast.2：做完了但有值得注意的地方）
   - id: 9
-    spec: 1
+    spec: 2
     request: 在 `[1] PROFILES` 按 `Enter` 啟用這個 profile：先問，寫出會寫幾個 domain，沒有 `localhost` 時警告；接受了才寫進 hosts 檔
     tdp: [tdp K3, tdp F6, tdp confirm, tdp toast.2, tdp note.7, tdp T1, tdp note.6, tdp M5]
     remark:
       - profile 上最直觀的事就是啟用（tdp K3）；要先問（tdp F6：哪些動作要 confirm app 可以自行決定）
       - 沒有 localhost 的那一句是警告，用 Peach（tdp confirm.2：哪一句算警告 app 可以自行決定）
   - id: 10
-    spec: 1
+    spec: 2
     request: 用自己的帳號跑 hostu；hosts 檔要管理員才寫得了時，sudo 在 hostu 裡的終端機問密碼（Windows 是系統的 UAC 視窗）。macOS、Linux 用 `sudo` 或 `doas`，Windows 用 `gsudo` 或 Windows 11 的 `sudo`
     tdp: [tdp terminal.7, tdp terminal.4, tdp K10, tdp F1, tdp note.6, tdp components.5, tdp note.7, tdp F5]
     remark:
       - 照 tdp terminal.7：先試不用密碼的，要密碼才開 terminal popup 讓工具自己問；用哪個工具依平台 app 可以自行決定
   - id: 11
-    spec: 1
+    spec: 2
     request: 舊的 hosts 檔留著：hostu 第一次寫 hosts 檔之前，先把它原樣留一份（`~/.hostu/hosts.original`）
     tdp: [tdp E3, tdp P5, tdp note.6, tdp note.7]
     remark:
       - app 替使用者記下的原值是資料，放資料目錄（tdp E3）
   - id: 12
-    spec: 1
+    spec: 2
     request: 在 `[1] PROFILES` 按 `p` 預覽這個 profile 會寫成的 hosts 檔
-    tdp: [tdp P5, tdp M5, tdp K12, tdp note.1, tdp note.2, tdp note.3, tdp note.4]
+    tdp: [tdp P5, tdp M5, tdp K12, tdp note.1, tdp note.2, tdp note.3, tdp note.4, tdp note.7]
     remark:
       - "`p` 是領域熱鍵（tdp P5）：在 Space menu 裡、用 [] 標出（tdp M5），不佔移動的字母（tdp K12）"
       - 預覽是唯讀的內容，用 viewer（tdp note）
+      - 只看不改也是動作，記進 App Log（tdp note.7）
   - id: 13
-    spec: 1
+    spec: 2
     request: 在 `[1] PROFILES` 按 `r` 改這個 profile 的名字
     tdp: [tdp P5, tdp M5, tdp K12, tdp input.2, tdp input.5, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9]
     remark:
       - 名字合不合規則是功能邏輯（tdp P5），不合時寫在 input popup 的錯誤列（tdp popup.7）；存檔失敗開 error popup，input popup 留著（tdp note.6）
   - id: 14
-    spec: 1
+    spec: 2
     request: 在 `[1] PROFILES` 按 `c` 把這個 profile 複製成一個新的 profile
     tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp input.2, tdp input.6, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9]
     remark:
       - 新增之後 cursor 移到新的那一項（tdp K3）
   - id: 15
-    spec: 1
+    spec: 2
     request: 在 `[1] PROFILES` 按 `D` 刪掉這個 profile，先問；生效中的不能刪
     tdp: [tdp P5, tdp M5, tdp K12, tdp F6, tdp confirm, tdp M6, tdp T1, tdp note.6, tdp note.7, tdp F4]
     remark:
       - 生效中的 profile 上，刪除照停用畫（tdp M6：對象存在、但現在不能執行）
   - id: 16
-    spec: 1
+    spec: 2
     request: 在 `[1] PROFILES` 按 `n` 新增一個空的 profile
     tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp input.2, tdp input.6, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9]
     remark:
       - 新增之後 cursor 移到新的那一項（tdp K3）
   - id: 17
-    spec: 1
+    spec: 2
     request: 在 `[1] PROFILES` 按 `i` 把 hosts 檔現在的內容讀成一個新的 profile
     tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp toast.2, tdp input.2, tdp input.6, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9]
     remark:
       - 有跳過的行時用 Warning toast 說跳過了幾行（tdp toast.2）；新增之後 cursor 移到新的那一項（tdp K3）
   - id: 18
-    spec: 1
+    spec: 2
     request: 在 `[2] DOMAINS` 按 `n` 新增 domain：NEW DOMAIN 表單，一個 domain 一筆；Addresses 可以一次打好幾個位址，用空白隔開（`10.1.2.3 fd00::3`）；名稱與位址打錯當場就擋下來
     tdp: [tdp form, tdp input.2, tdp text, tdp popup.7, tdp P5, tdp M5, tdp K12, tdp K3, tdp note.7, tdp input.8, tdp input.9, tdp T1, tdp note.6]
     remark:
       - 名稱與位址合不合規則是功能邏輯（tdp P5），擋在那一欄的 input popup（tdp form.16、tdp popup.7）
       - 兩欄 Domain、Addresses，按鈕寫 Add（tdp form.7：按鈕上寫按下去要做的事）
   - id: 19
-    spec: 1
+    spec: 2
     request: 在 `[2] DOMAINS` 按 `Enter` 編輯這個 domain 與它的位址
     tdp: [tdp K3, tdp form, tdp input.2, tdp input.5, tdp text, tdp popup.7, tdp note.7, tdp M5, tdp input.8, tdp input.9, tdp P5, tdp T1, tdp F4, tdp note.6]
     remark:
       - domain 上最直觀的事是編輯（tdp K3）；表單的標題帶它的名字（tdp form.3）
   - id: 20
-    spec: 1
+    spec: 2
     request: 在 `[2] DOMAINS` 按 `D` 刪掉這個 domain，先問
     tdp: [tdp P5, tdp M5, tdp K12, tdp F6, tdp confirm, tdp T1, tdp note.6, tdp note.7, tdp F4]
   - id: 21
@@ -157,19 +161,21 @@ tasks:
     remark:
       - hosts 檔怎麼讀、怎麼寫是功能邏輯（tdp P5）
   - id: 25
-    spec: 1
+    spec: 2
     request: hostu 不監看 hosts 檔：啟動時與寫完之後才讀
     tdp: [tdp P5, tdp E3, tdp F5, tdp toast.1, tdp note.6, tdp note.7]
     remark:
       - hosts 檔是 app 外面的東西：讀不到時 app 照常開著（tdp E3 的「讀不了時」）。E3 的「照 panel.15 寫」管的是畫在某個 panel 上的東西，hosts 檔不在任何 panel 上，剩下 tdp F5：錯誤立刻看得到、記進 App Log；啟動時的讀取不是 toast.1 寫到的兩種失敗，用 toast 還是 error popup app 可以自行決定（terminu 2026-10-26 判）
   - id: 26
-    spec: 1
+    spec: 2
     request: "`config.yaml` 或 `profiles.yaml` 讀不了時（例如手改壞了），hostu 一開始就先問：`Enter` 把它改名成 `.bak`，像第一次打開一樣開始，`Esc` 離開，印出是哪個檔、哪裡不對"
     tdp: [tdp E3, tdp confirm, tdp confirm.3, tdp note.7, tdp components.5]
   - id: 27
-    spec: 1
+    spec: 2
     request: 按 `!` 打開 App Log：這次打開以來 hostu 做了什麼、哪裡出了問題
-    tdp: [tdp note.7, tdp F5, tdp K1, tdp screen.2, tdp toast.2]
+    tdp: [tdp note.7, tdp P3, tdp F5, tdp K1, tdp screen.2, tdp toast.2]
+    remark:
+      - 記的動作照 tdp note.7：tdp P3 的 operation，只看不改的也記（`p` 預覽）；在 confirm、表單、input popup 按 `Esc` 取消的沒做，不記；移動 cursor、換 focus、Space menu、`?`、`!` 不記
   - id: 28
     spec: 1
     request: 按 `q` 離開
@@ -181,7 +187,7 @@ tasks:
     remark:
       - README 沒寫：splash 不揭露（tdp S2）。這個 task 是從測試 TestSplashIsDocsIcon 來的
   - id: 30
-    spec: 1
+    spec: 2
     request: 安裝：Homebrew、Scoop（Windows）、安裝腳本（不用 sudo，裝到 `~/.local/bin`；Windows 在 PowerShell 裡）、`go install`。移除：Homebrew 或移除腳本，刪 profile 與舊 hosts 檔的副本之前先問；移除 hostu 不動 hosts 檔
     tdp: [tdp E6, tdp project.2, tdp project.3, tdp project.7]
     remark:

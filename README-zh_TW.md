@@ -33,7 +33,7 @@ domain 指到一個或好幾個位址；在表單裡一筆一筆加、改，不�
 - 寫系統的 hosts 檔：macOS、Linux 要有 `sudo` 或 `doas`；Windows 要有 `gsudo` 或 Windows 11 的 `sudo`。
 - [Nerd Font](https://www.nerdfonts.com) 的終端機設定：icon 與外框都是 Nerd Font 的字。
 - truecolor（24-bit 色）的終端機：淡化的顏色與層色在 256 色下分不出來。
-- 終端機至少 80 欄寬、24 列高；比這小時 hostu 只畫名稱與需要的大小，終端機拉大就回到原本的樣子。
+- 終端機至少 60 欄寬、24 列高；比這小時 hostu 只畫名稱、需要的大小與怎麼離開（連按兩次 `Ctrl-C`），終端機拉大就回到原本的樣子。
 
 hostu 啟動時會量 icon 與 powerline 符號各佔幾格。量錯時可以自己設：
 

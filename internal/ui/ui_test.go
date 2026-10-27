@@ -123,7 +123,7 @@ type sized struct {
 // draws it (tdp E8).
 func TestL4EveryLineIsTheTerminalsWidth(t *testing.T) {
 	var cases []sized
-	for _, sz := range [][2]int{{80, 24}, {80, 40}, {100, 30}, {120, 40}, {160, 50}} {
+	for _, sz := range [][2]int{{60, 24}, {60, 32}, {80, 24}, {120, 40}, {160, 50}} {
 		for _, st := range states {
 			cases = append(cases, sized{w: sz[0], h: sz[1], name: st.name, keys: st.keys})
 		}
@@ -141,12 +141,12 @@ func TestL4EveryLineIsTheTerminalsWidth(t *testing.T) {
 func TestE5PopupBiggerThanTheScreen(t *testing.T) {
 	var cases []sized
 	for _, st := range states[2:] { // the popups
-		for _, small := range [][2]int{{80, 40}, {120, 24}, {80, 24}, {80, 5}, {1, 1}} {
+		for _, small := range [][2]int{{60, 32}, {120, 24}, {60, 24}, {60, 5}, {1, 1}} {
 			cases = append(cases, sized{w: 120, h: 40, name: st.name, keys: st.keys, small: small})
 		}
 	}
 	for _, p := range ownPopups {
-		for _, small := range [][2]int{{80, 40}, {120, 24}, {80, 24}, {80, 5}, {1, 1}} {
+		for _, small := range [][2]int{{60, 32}, {120, 24}, {60, 24}, {60, 5}, {1, 1}} {
 			cases = append(cases, sized{w: 120, h: 40, name: p.name, env: p.env, then: p.then, small: small})
 		}
 	}
@@ -170,12 +170,13 @@ func checkSized(t *testing.T, c sized) {
 	hs.fullWidth(c.name)
 }
 
-// TestL1BelowTheLeastSize is tdp L1: smaller than 80×24 either way, only
-// hostu's name shows, and under it the size it needs when that fits. No key
-// acts but Ctrl-C twice, and all comes back as the terminal grows.
+// TestL1BelowTheLeastSize is tdp L1: smaller than 60×24 either way, only
+// hostu's name shows, under it the size it needs and how to quit when they
+// fit, the size going first. No key acts but Ctrl-C twice, and all comes
+// back as the terminal grows.
 func TestL1BelowTheLeastSize(t *testing.T) {
-	const hint = "needs a terminal of at least 80×24"
-	for _, sz := range [][2]int{{79, 24}, {80, 23}, {40, 12}, {30, 5}, {80, 1}, {1, 1}} {
+	const hint, quit = "needs a terminal of at least 60×24", "Press [Ctrl-C] twice to quit"
+	for _, sz := range [][2]int{{59, 24}, {60, 23}, {40, 12}, {30, 5}, {60, 2}, {60, 1}, {1, 1}} {
 		t.Run(fmt.Sprintf("%dx%d", sz[0], sz[1]), func(t *testing.T) {
 			t.Parallel()
 			hs := newHarness(t, 80, 40)
@@ -186,10 +187,15 @@ func TestL1BelowTheLeastSize(t *testing.T) {
 			if sz[0] >= len("hostu") {
 				hs.contains("hostu")
 			}
-			if sz[0] >= terminu.Width(hint) && sz[1] >= 2 {
+			if sz[0] >= terminu.Width(hint) && sz[1] >= 3 {
 				hs.contains(hint)
 			} else {
 				hs.lacks(hint)
+			}
+			if sz[0] >= terminu.Width(quit) && sz[1] >= 2 {
+				hs.contains(quit)
+			} else {
+				hs.lacks(quit)
 			}
 			hs.lacks("ITEM OPERATION")
 			hs.keys("q", "Esc", "Enter", "Enter", "Ctrl-C")
@@ -599,11 +605,20 @@ func TestAppLog(t *testing.T) {
 	hs.keys("n", "lab", "Enter", "r", "Backspace", "Backspace", "Backspace", "work", "Enter", "c", "Enter")
 	hs.keys("Tab", "n", "Enter", "nas.lan", "Enter", "j", "Enter", "10.0.0.9", "Enter", "Tab", "Enter")
 	hs.keys("Enter", "Tab", "Enter", "D", "Enter")
-	hs.keys("1", "gg", "Enter", "Enter", "!")
+	hs.keys("1", "gg", "p", "Esc", "Enter", "Enter", "!")
 	hs.contains("Made the profile lab", "Renamed the profile lab to work", "Copied the profile work to work copy",
 		"Added nas.lan to the profile work copy", "Saved nas.lan in the profile work copy",
 		"Deleted nas.lan from the profile work copy",
-		"Kept "+hs.env.Hosts+" as it was in "+filepath.Join(hs.env.Data, original), "Wrote default to "+hs.env.Hosts)
+		"Kept "+hs.env.Hosts+" as it was in "+filepath.Join(hs.env.Data, original), "Wrote default to "+hs.env.Hosts,
+		"Previewed the profile default")
+}
+
+// What is cancelled was not done and is not in the App Log (tdp note.7).
+func TestAppLogLeavesOutCancelled(t *testing.T) {
+	t.Parallel()
+	hs := newHarness(t, 120, 40)
+	hs.keys("G", "D", "Esc", "r", "Esc", "Tab", "n", "Esc", "D", "Esc", "1", "Enter", "Esc", "!")
+	hs.lacks("Deleted", "Renamed", "Added", "Wrote")
 }
 
 func TestQuit(t *testing.T) {

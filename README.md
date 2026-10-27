@@ -35,8 +35,8 @@ into a profile named `default`, so nothing you had is lost.
 - To write the system's hosts file: `sudo` or `doas` on macOS and Linux; on Windows `gsudo` or the `sudo` of Windows 11.
 - A [Nerd Font](https://www.nerdfonts.com) terminal profile: the icons and the frames are Nerd Font glyphs.
 - A truecolor (24-bit) terminal: the faded colours and the layer colours cannot be told apart in 256 colours.
-- A terminal at least 80 columns wide and 24 rows high; in a smaller one hostu shows only its name and the size it
-  needs, and comes back as it was once the terminal grows.
+- A terminal at least 60 columns wide and 24 rows high; in a smaller one hostu shows only its name, the size it needs
+  and how to quit (`Ctrl-C` twice), and comes back as it was once the terminal grows.
 
 hostu measures how many cells an icon and a powerline symbol take when it starts. When it gets them wrong, set them:
 

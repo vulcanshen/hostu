@@ -75,9 +75,10 @@ func New(env Env) *terminu.App { return newHostu(env).a }
 
 func newHostu(env Env) *hostu {
 	h := &hostu{a: terminu.New("hostu"), env: env}
-	// The least size (tdp L1): two panels and every popup fit in 80×24, the
-	// size a new terminal window often has.
-	h.a.MinWidth, h.a.MinHeight = 80, 24
+	// The least size (tdp L1): two panels side by side and every popup fit
+	// in 60 columns, and in 24 rows, the height a new terminal window often
+	// has.
+	h.a.MinWidth, h.a.MinHeight = 60, 24
 	h.a.QuitDesc = "leave hostu"
 	h.a.Splash = splash()
 	h.a.Status = h.status
