@@ -86,7 +86,14 @@ func (h *hostu) onMsg(msg tea.Msg) tea.Cmd {
 	}
 	switch {
 	case w.err != nil:
-		return h.a.ErrorAbout("Write failed", h.env.Hosts, sentence(w.err))
+		cmd := h.a.ErrorAbout("Write failed", h.env.Hosts, sentence(w.err))
+		// The popup has the line that says why; all the tool said goes in
+		// the App Log (components, control characters).
+		var te *hosts.ToolError
+		if errors.As(w.err, &te) && te.Output != te.Reason {
+			h.a.Log(terminu.Info, "Output of "+te.Tool+": "+te.Output)
+		}
+		return cmd
 	case w.elevated != nil:
 		// sudo wants a password: it asks in a terminal popup, which closes
 		// when the copy ends (components/dialog/terminal).

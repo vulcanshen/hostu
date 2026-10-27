@@ -2,17 +2,18 @@ tasks:
   - id: 1
     spec: 1
     implementation: |
-      單畫面：最上面一列 statusbar（task 7），左 [1] PROFILES、右 [2] DOMAINS: <profile>，最下面 terminu-go 的 footer（README 的 demo gif，8c5b006 錄的）
-      panel 的 hint：[1] Enter:activate p:preview n:new；[2] Enter:edit n:new（demo gif）
-      窄的時候怎麼排：不知道（README 沒寫，gif 只有寬的畫面）
-      tdptest 走遍 app 驗畫面的規定，一般的值與帶控制字元的值各走一次（e0dd1cd）
+      terminu-go 的單一畫面（Screen「Profiles」）：最上面一列 statusbar（task 7），下面 [1] PROFILES 在左、佔寬的三分之一，[2] DOMAINS 在右、佔其餘；最下面 terminu-go 的 footer
+      [2] 是 [1] 的明細（Panel.Details），label 帶 [1] cursor 那個 profile 的名字：[2] DOMAINS: office
+      panel 的 hint：[1] Enter:activate p:preview n:new；[2] Enter:edit n:new（[2] 沒有 profile 時 n 不在）
+      沒有窄寬的排法：最低尺寸 80×24（task 2）以上兩個 panel 都畫，80 欄時 [1] 26 欄寬
+      tdptest 走遍 app：各種尺寸與 icon 寬度下，每個 panel 開關 Space menu、global operation popup、App Log、key reference，再縮到最低尺寸以下；每一格每一列都等於終端機寬、沒有送控制字元給終端機。一般的值走一次，profile 名字與 hosts 檔路徑帶控制字元的再走一次（照 components 的控制字元畫成紅色的名字）
     test: [TestTDP, TestTDPWithTrickyValues]
   - id: 2
     spec: 1
     implementation: |
-      最低尺寸 80×24：比這小時只畫名稱與需要的大小，拉大回到原本的畫面（README）
-      每種尺寸、每種 icon 寬度下每一列都等於終端機寬度；toast、error popup、sudo 的 terminal popup 都量（9080664）
-      popup 比畫面大時：不知道（測試名稱是 TestE5PopupBiggerThanTheScreen）
+      最低尺寸 80×24（App.MinWidth、MinHeight）；比這小時 terminu-go 只畫「hostu」與「needs a terminal of at least 80×24」，放不下時先拿掉提示；按鍵都不作用，只有連按兩次 Ctrl-C 離開；拉大回到原本的畫面，開著的 popup 還在
+      每個畫面與 hostu 開的每個 popup（含 toast、error popup、MOVE ASIDE、sudo 的 terminal popup、App Log），在 80×24 到 160×50 的幾種尺寸、三種 icon／powerline 寬度（1/1、2/1、2/2）下，每一列都等於終端機寬
+      popup 開著時終端機縮小：popup 照打開時的大小，超出畫面的部分切掉（terminu-go 畫），縮到 80×5、1×1 也不當掉
     test: [TestL1BelowTheLeastSize, TestL4EveryLineIsTheTerminalsWidth, TestE5PopupBiggerThanTheScreen]
   - id: 3
     spec: 1
@@ -24,126 +25,150 @@ tasks:
   - id: 4
     spec: 1
     implementation: |
-      hostu 啟動；hostu version（-v、--version）印出版本；hostu help（-h、--help）印出命令列的用法（README）
-      本機 build 時印什麼：不知道
+      cmd/hostu：沒有參數就啟動；version、-v、--version 印 version.Display()（發版是 v<版號>，本機 build 是 dev）；help、-h、--help 印命令列的用法（指令三行，加上 profiles.yaml 在哪、HOSTU__DATA 與 HOSTU__HOSTS_FILE）
+      其他參數：stderr 寫「hostu: unknown command "<參數>"」與用法，exit 2
+      Run 回錯（MOVE ASIDE 的 Esc、找不到家目錄）：stderr 寫「hostu: <錯誤>」，exit 1
     test:
       - commit: 8c5b006
   - id: 5
     spec: 1
     implementation: |
-      [1] PROFILES 是 terminu-go 的清單：NAME、DOMAINS 兩欄，DOMAINS 是 domain 的數目、靠右（demo gif）
-      生效中的那一個名稱前面畫綠色的勾（Row.Styled，e0dd1cd）
-      名稱太長時截短，DOMAINS 的寬度不變（91cc4f3）
-      順序：不知道（gif 上是 default、office、client site）
-      空的時候、讀不到的時候寫什麼：不知道
-    test: [TestLongNameIsCut]
+      [1] PROFILES 是 terminu-go 的清單：NAME（可以截短）、DOMAINS（domain 的數目，數字靠右，放不下時第一個收）兩欄
+      生效中的那一個名稱前面畫 nf-md-check_circle（Green，Row.Styled）；其他列前面留一樣寬的空白，名字對齊
+      順序是 profiles.yaml 裡的順序；新增、複製、匯入的加在最後。每次啟動同一份 profiles.yaml 畫出來一樣
+      cursor 移動時 [2] 跟著換（task 6）
+      空的時候（profiles.yaml 有、但一個 profile 都沒有）：「No profiles yet」、「Press [n] to make one, [i] to read the hosts file into one, or [Space] to see what you can do here」；item operation 沒有對象，Space menu 沒有那一區，hint 只剩 n:new（terminu-go 照 Action 的 Scope 拿掉）
+      profiles.yaml 讀不了時不畫清單，先問 MOVE ASIDE（task 26）
+      Space menu 的 item operation：[Enter] Activate、[p]review、[r]ename、[c]opy、[D]elete；panel operation：[n]ew、[i]mport（各 task）
+    test: [TestLongNameIsCut, TestSameEveryStart, TestEmptyListsHint]
   - id: 6
     spec: 1
     implementation: |
-      [2] DOMAINS: <profile 的名字>：DOMAIN、ADDRESSES 兩欄，一個 domain 的好幾個位址用「, 」接在同一格（demo gif：127.0.0.1, ::1）
-      跟著 [1] 的 cursor 換成那個 profile 的 domain（demo gif）
-      順序：不知道（gif 上新加的排在最後）
-      空的時候寫什麼：不知道
-    test:
-      - commit: 8c5b006
+      [2] DOMAINS: <profile>：terminu-go 的清單，DOMAIN、ADDRESSES 兩欄，都可以截短，放不下時先收 ADDRESSES；一個 domain 的位址用「, 」接在同一格（127.0.0.1, ::1）
+      [1] 的 cursor 一移動就換成那個 profile 的 domain，label 跟著換；順序是 profile 裡的順序，新加的在最後
+      profile 沒有 domain：「No domains in <profile>」、「Press [n] to add one, or [Space] to see what you can do here」；Space menu 沒有 item operation 那一區，hint 只剩 n:new
+      沒有 profile 可以顯示：「No profile to show」、「Press [1] to go to the profiles」；這時 [n]ew 也不在，下框不寫 hint
+      Space menu 的 item operation：[Enter] Edit、[D]elete；panel operation：[n]ew（task 18–20）
+    test: [TestFirstStartMakesDefault, TestNewProfile, TestNewDomain, TestEmptyListsHint]
   - id: 7
     spec: 1
     implementation: |
-      statusbar：hosts: <hosts 檔的路徑>  active: <生效中的 profile>（demo gif）
-      路徑後面的狀態補成固定寬，生效中的 profile 放最後（9080664）；statusbar 由 spans 組成（e0dd1cd）
-      hosts 檔跟生效中的 profile 對不上時寫的字：不知道
-    test: [TestStatusSaysTheHostsFileDiffers]
+      statusbar 一列：「hosts: <hosts 檔路徑> 」（Overlay0；路徑最多佔寬的三分之一、至少 12 格，太長從前面截）、狀態、「  active: 」（Overlay0）、生效中的 profile（Lavender；沒有時寫 none，Overlay0）
+      狀態補成「(can't read)」的寬度：hosts 檔跟生效中的 profile 一樣是「(in sync)」（Overlay0），不一樣是「(differs)」（Peach），hosts 檔讀不了是「(can't read)」（Red），沒有生效中的 profile 時空白
+      比的是 hosts 檔讀出來的 domain 與位址（task 24 的讀法），跟生效中的 profile 照順序一樣才算一樣；hosts 檔在啟動時與寫完之後讀（task 25），改了 profile 不會寫 hosts 檔，所以會變成 (differs)，再啟用一次回到 (in sync)
+    test: [TestStatusSaysTheHostsFileDiffers, TestHostsFileCantBeRead]
   - id: 8
     spec: 1
     implementation: |
-      啟動時沒有 profiles.yaml：讀 hosts 檔成 default，標成生效中，存進 ~/.hostu/profiles.yaml（README、e0dd1cd）
-      不寫 hosts 檔（README），不建 config.yaml（2b78611）
-      有跳過的行時，第一次打開的 toast 是 Warning，寫跳過了幾行（e0dd1cd）；沒跳過時的 toast：不知道
+      啟動時（MOVE ASIDE 都問完之後）沒有 profiles.yaml：讀 hosts 檔（task 24），做成 default、標成生效中，存進 profiles.yaml；不寫 hosts 檔，不建 config.yaml
+      toast：Info「Made the profile default from <hosts 檔路徑>」；有跳過的行時 Warning「Made the profile default from <路徑>, skipped <N> line(s)」；App Log 照記
+      存不了：error popup「CAN'T SAVE: <profiles.yaml 路徑>」與原因
+      hosts 檔讀不了：error popup「CAN'T READ: <路徑>」（task 25），不建 default，[1] 是空的
+      第二次啟動起不再做這些
     test: [TestFirstStartMakesDefault, TestFirstStartSaysWhatItSkipped]
   - id: 9
     spec: 1
     implementation: |
-      [1] 的 Enter：開 confirm，內容寫 hosts 檔會變成幾個 domain（demo gif：The hosts file becomes the 4 domains of office.），沒有 localhost 時多一句警告（README）
-      confirm 的標題、問句、警告的字、Space menu 裡那一列：不知道
-      Enter：寫 hosts 檔（怎麼寫見 task 10），toast「Wrote office to /etc/hosts」（184ac4b，toast 的種類：不知道），App Log 照記；statusbar 的 active 換成它（demo gif）
-      Esc：不寫（README）
+      [1] 的 Enter（Space menu「[Enter] Activate — write it to the hosts file」）：開 confirm「ACTIVATE: <profile>」
+      內容「The hosts file gets <N> domain(s), and nothing else.」；profile 沒有 localhost（大小寫不分）時多一列 Peach 的警告「<profile> has no localhost: programs that connect to localhost stop working.」
+      問句「Write <profile> to <hosts 檔路徑>?」，hint Enter:write Esc:cancel
+      Enter：先留舊的 hosts 檔（task 11），再寫 hosts 檔（task 10，不擋住畫面）；寫完再讀一次 hosts 檔，profile 標成生效中、存 profiles.yaml，Success toast「Wrote <profile> to <hosts 檔路徑>」（App Log 照記），statusbar 換成它、(in sync)
+      寫失敗：error popup「WRITE FAILED: <hosts 檔路徑>」與原因，生效中的不變
+      寫好了、但存 profiles.yaml 失敗：error popup「CAN'T SAVE: <profiles.yaml 路徑>」「The hosts file has <profile>, but it is not kept as the active profile. <原因>」，生效中的不變
+      Esc：什麼都不寫；已經生效的 profile 也可以再啟用一次（重寫 hosts 檔）
     test: [TestActivateWritesTheHostsFile, TestActivateEscWritesNothing, TestActivateWarnsWithoutLocalhost]
   - id: 10
     spec: 1
     implementation: |
-      寫 hosts 檔：hostu 自己寫得了就直接寫；寫不了時先試不問密碼的 sudo；要密碼時開 terminal popup 跑 sudo（沒有就 doas），讓它在 hostu 裡的終端機問（README、8c5b006）
-      Windows：gsudo 或 Windows 11 的 sudo，系統跳 UAC（README）
-      都沒有、或寫失敗時：不知道（測試有 TestWriteNoSudo）
-    test: [TestWriteItself, TestWriteSudoWithoutAsking, TestWriteSudoWantsAPassword, TestWriteNoSudo, TestWriteWindows, TestSudoAsksInATerminal]
+      hostu 用自己的帳號跑；寫 hosts 檔時先自己寫，可以就好
+      沒有權限（permission denied）時，內容寫進暫存檔，以管理員身分複製過去：
+      macOS、Linux：用 sudo，沒有就 doas；先跑「<工具> -n cp <暫存檔> <hosts 檔>」不問密碼，成功就好；要密碼時開 terminal popup「SUDO: <hosts 檔路徑>」跑「<工具> cp <暫存檔> <hosts 檔>」，讓它自己問，跑完 popup 自己關；這個 PTY 沒有歷史與選取模式。結束碼不是 0：error popup「WRITE FAILED: <路徑>」「Could not write it with <工具>: <錯誤>.」
+      都沒有：error popup「WRITE FAILED: <路徑>」「No permission to write <路徑>, and neither sudo nor doas is there to write it as the administrator.」
+      Windows：用 gsudo，沒有就 Windows 11 的 sudo，跑 powershell 的 Copy-Item，系統跳 UAC；都沒有「No permission to write <路徑>. Install gsudo (scoop install gsudo), or open the terminal as the administrator.」
+      Windows 的複製失敗：error popup「WRITE FAILED: <路徑>」只寫說原因的那一行「Could not write it with <工具>: <輸出的第一個非空行>」（沒有輸出時寫結束的錯誤）；輸出好幾行時，全文接成一列記進 App Log：Info「Output of <工具>: <全部的行>」
+      其他寫入錯誤直接開 error popup；暫存檔用完刪掉。密碼不經過 hostu
+    test: [TestWriteItself, TestWriteSudoWithoutAsking, TestWriteSudoWantsAPassword, TestWriteNoSudo, TestWriteWindows, TestWriteWindowsFails, TestWriteFailsSaysWhy, TestSudoAsksInATerminal]
   - id: 11
     spec: 1
     implementation: |
-      第一次寫 hosts 檔之前，把它原樣留到 ~/.hostu/hosts.original（HOSTU__DATA 改位置）（README、e0dd1cd）；App Log 記一筆（e0dd1cd）
-      已經有 hosts.original 時：不知道
-    test:
-      - commit: 8c5b006
-      - commit: e0dd1cd
+      每次啟用寫 hosts 檔之前：資料目錄（~/.hostu，HOSTU__DATA）沒有 hosts.original 時，把 hosts 檔原樣複製過去（需要時先建資料目錄），App Log 記 Info「Kept <hosts 檔> as it was in <hosts.original 的路徑>」（家目錄寫 ~）
+      已經有 hosts.original、或 hosts 檔不存在：不動
+      複製失敗：不寫 hosts 檔，error popup「WRITE FAILED: <hosts 檔路徑>」與原因
+    test: [TestActivateWritesTheHostsFile, TestAppLog]
   - id: 12
     spec: 1
     implementation: |
-      [1] 的 p：開 viewer，內容是這個 profile 會寫成的 hosts 檔（README）
-      viewer 的標題、Space menu 裡那一列：不知道
+      [1] 的 p（Space menu「[p]review — the hosts file it writes」，item operation）：開 terminu-go 的 viewer「HOSTS FILE — <profile>」（glyph nf-md-file_document），內容是啟用時會寫成的 hosts 檔（task 24 的寫法），一行一行
     test: [TestPreview]
   - id: 13
     spec: 1
     implementation: |
-      [1] 的 r：開改名的 input popup（README）；標題、有沒有舊值的灰字提議、名字的規則與錯誤的字：不知道
-      在確定時存檔：存失敗時 input popup 留著、值還在，error popup 蓋在上面（9080664）
-      改的是生效中的 profile 時：不知道（測試名稱是 TestRenameTheActiveProfile）
-    test: [TestRenameTheActiveProfile, TestSaveFailsKeepsTheInput]
+      [1] 的 r（Space menu「[r]ename — give it another name」，item operation）：開 text input「RENAME: <profile>」（glyph nf-md-pencil），說明列「New name for <profile>」，舊名字是灰字提議，hint 的動詞 rename
+      確定時（terminu-go 的 text input，task 14、16、17 的名字也是同一個）：先檢查控制字元，有就擋下「Name can't have control characters」；再去掉前後的空白字元（Unicode 的空白）；接著 hostu 檢查：空的「Name can't be empty」，跟別的 profile 同名（大小寫不分，跟自己不算）「There is a profile named <名字> already」；寫在錯誤列，popup 不關
+      （hostu 的「A name has no space at either end」「A name has no control characters」只用在讀手改的 profiles.yaml，task 21；從 input 走不到）
+      通過：改名、生效中的 profile 跟著改名，存 profiles.yaml；cursor 留在它上面，[2] 的 label 與 statusbar 跟著換；App Log 記「Renamed the profile <舊> to <新>」
+      存失敗：名字改回去，input popup 留著、值還在，error popup 蓋在上面；關掉後再按 Enter 就是重試
+    test: [TestRenameTheActiveProfile, TestNewProfile, TestNameSpacesAndControlCharacters, TestSaveFailsKeepsTheInput]
   - id: 14
     spec: 1
     implementation: |
-      [1] 的 c：開名字的 input popup，確定後加一個內容一樣的新 profile（README）；在確定時存檔（9080664）
-      建議的名字、新的 profile 排在哪、cursor 停在哪：不知道
+      [1] 的 c（Space menu「[c]opy — a new profile with its domains」，item operation）：開 text input「COPY: <profile>」（glyph nf-md-content_copy），說明列「Name of the copy」，建議值「<profile> copy」（有了就「<profile> copy 2」、3…），hint 的動詞 copy
+      名字的檢查與存失敗照 task 13
+      通過：加一個新的 profile，domain 與位址照抄一份（不共用），加在最後、存 profiles.yaml，cursor 移到它上面；App Log 記「Copied the profile <原本> to <新>」
     test: [TestCopyProfile]
   - id: 15
     spec: 1
     implementation: |
-      [1] 的 D：先問（README），接受才刪；生效中的不能刪（README）
-      confirm 的字、生效中的那一個上按 D 或 Space menu 怎麼畫：不知道
-    test: [TestDeleteProfile]
+      [1] 的 D（Space menu「[D]elete — take it away, with its domains」，item operation）：生效中的 profile 上停用（Space menu 那一列停用色，按 D 不作用）
+      其他 profile：開 confirm「DELETE: <profile>」，內容「It has no domains.」／「Its one domain goes with it.」／「Its <N> domains go with it.」，問句「Delete the profile <profile>?」，hint Enter:delete Esc:cancel
+      Enter：拿掉、存 profiles.yaml；App Log 記「Deleted the profile <profile>」。存失敗：放回原位，error popup「CAN'T SAVE: <profiles.yaml 路徑>」與原因
+      Esc：不動
+      從 Space menu 執行的：confirm 疊在 menu 上，Esc 回到 menu；Enter 刪掉之後沒有打開東西（Action 沒設 Stay），menu 跟著關；存失敗時 error popup 打開，menu 留在底下
+    test: [TestDeleteProfile, TestDeleteFromTheMenuClosesIt]
   - id: 16
     spec: 1
     implementation: |
-      [1] 的 n：開名字的 input popup，確定後加一個空的 profile（README）；在確定時存檔（9080664）
-      標題、建議的名字、cursor 停在哪：不知道
-    test: [TestNewProfile]
+      [1] 的 n（Space menu「[n]ew — an empty profile」，panel operation）：開 text input「NEW PROFILE」（glyph nf-md-pencil），說明列「Name of the new profile」，沒有建議值，hint 的動詞 add
+      名字的檢查與存失敗照 task 13
+      通過：加一個沒有 domain 的 profile，加在最後、存 profiles.yaml，cursor 移到它上面，[2] 是它的空狀態；App Log 記「Made the profile <名字>」
+    test: [TestNewProfile, TestNameSpacesAndControlCharacters, TestSaveFailsKeepsTheInput]
   - id: 17
     spec: 1
     implementation: |
-      [1] 的 i：把 hosts 檔現在的內容讀成一個新的 profile（README）；有跳過的行時 Warning toast 寫跳過了幾行（9080664）
-      新的 profile 叫什麼、cursor 停在哪：不知道
+      [1] 的 i（Space menu「[i]mport — the hosts file as it is now, as a new profile」，panel operation）：開 text input「IMPORT: <hosts 檔路徑>」（glyph nf-md-import），說明列「Name of the profile made from it」，建議值「imported」（有了就「imported 2」、3…），hint 的動詞 import
+      名字的檢查與存失敗照 task 13
+      通過：這時再讀一次 hosts 檔（讀不了：error popup 蓋在 input popup 上），照 task 24 讀成 domain，加成新的 profile、在最後、存 profiles.yaml，cursor 移到它上面
+      toast：Success「Imported <N> domain(s) from <hosts 檔路徑>」；有跳過的行時 Warning「…, skipped <N> line(s)」；App Log 照記
     test: [TestImportTheHostsFile]
   - id: 18
     spec: 1
     implementation: |
-      [2] 的 n：開 NEW DOMAIN 表單（terminu-go 的表單），Domain、Addresses 兩欄左右式，按鈕 Add（demo gif）
-      Domain、Addresses 各在 input popup 裡打；Addresses 可以一次打好幾個，用空白隔開（README）
-      名稱與位址打錯時擋在 input popup（README「當場就擋下來」）；錯誤的字：不知道
-      Add：加進 [1] cursor 那個 profile、存 profiles.yaml（README）；沒填、domain 重複時：不知道
-    test: [TestNewDomain, TestCheckDomain, TestAddresses]
+      [2] 的 n（Space menu「[n]ew — a domain and its addresses」，panel operation；[2] 沒有 profile 時沒有這一項）：開 terminu-go 的表單「NEW DOMAIN」（glyph nf-md-web），兩欄左右式：Domain、Addresses，空的寫「not set」；按鈕 Add
+      Domain 的 Enter：text input「DOMAIN」，說明列「A name, as git.corp.local」；確定時檢查：空的「Domain can't be empty」；只能有英文字母、數字、-、_、.（「A domain has only letters, digits, -, _ and ., not <那個字>」）；點之間不能空（「A domain has no empty part between its dots」）；點之間最多 63 字、全部最多 253 字；寫在錯誤列，popup 不關
+      Addresses 的 Enter：text input「ADDRESSES」，說明列「IPv4 or IPv6 addresses, between spaces」；確定時 terminu-go 先檢查控制字元（貼上的 Tab、換行…），有就擋下「Addresses can't have control characters」，再去掉前後的空白；接著 hostu 用空白或逗號分開，每一個要是 IPv4 或 IPv6（可以帶 zone），不是的寫「<值> is not an IPv4 or IPv6 address」；空的「Addresses can't be empty」；重複的只留一個
+      Domain 的控制字元也一樣先由 terminu-go 擋下（「Domain can't have control characters」）
+      按 Add 時檢查整張表單：「Domain is required」、「<domain> is in <profile> already」（大小寫不分）、「Addresses are required」，照表單的錯誤列與 Red 的 label
+      通過：加在 profile 的最後、存 profiles.yaml，cursor 移到它上面，表單與底下的 Space menu 一起關掉；App Log 記「Added <domain> to the profile <profile>」。存失敗：不加，terminu-go 開 error popup 蓋在表單上
+    test: [TestNewDomain, TestCheckDomain, TestAddresses, TestPastedTabInAddresses]
   - id: 19
     spec: 1
     implementation: |
-      [2] 的 Enter：開表單編輯這個 domain 與它的位址（README），送出後改掉那一筆、存 profiles.yaml
-      表單的標題與按鈕：不知道
+      [2] 的 Enter（Space menu「[Enter] Edit — the domain and its addresses」，item operation）：開表單「EDIT: <domain>」，欄位與檢查照 task 18，值帶入這個 domain 的，按鈕 Save；欄位的 input popup 裡舊值是灰字提議（Tab 收進來改）
+      同名檢查不算自己
+      通過：換掉那一筆、存 profiles.yaml，cursor 留在它上面；App Log 記「Saved <domain> in the profile <profile>」；從 Space menu 打開的，表單關掉後回到 Space menu。存失敗：不改，error popup 蓋在表單上
     test: [TestEditDomain]
   - id: 20
     spec: 1
     implementation: |
-      [2] 的 D：先問（README），接受才刪、存 profiles.yaml
-      confirm 的字：不知道
-    test: [TestDeleteDomain]
+      [2] 的 D（Space menu「[D]elete — take the domain out of the profile」，item operation）：開 confirm「DELETE: <domain>」，問句「Delete <domain> from <profile>?」，hint Enter:delete Esc:cancel
+      Enter：拿掉、存 profiles.yaml；App Log 記「Deleted <domain> from the profile <profile>」；hosts 檔不動（生效中的 profile 改了，statusbar 變成 (differs)）。存失敗：放回原位，error popup「CAN'T SAVE: <profiles.yaml 路徑>」與原因
+      Esc：不動
+      從 Space menu 執行的：照 task 15，Enter 刪掉之後 menu 跟著關，Esc 回到 menu
+    test: [TestDeleteDomain, TestStatusSaysTheHostsFileDiffers, TestDeleteFromTheMenuClosesIt]
   - id: 21
     spec: 1
     implementation: |
-      profiles.yaml 在 ~/.hostu（HOSTU__DATA 改位置），每改一次就存一次（README、e0dd1cd）
+      profiles.yaml 在 ~/.hostu（HOSTU__DATA 改位置），每改一次就寫一次（README、e0dd1cd）
       讀進來時檢查：名字裡沒有控制字元、名字不重複、domain 與位址是 hosts 檔收的（9080664）
     test: [TestSaveAndLoad, TestLoadChecksWhatIsInIt, TestTakenAndRemove]
   - id: 22
@@ -161,22 +186,25 @@ tasks:
   - id: 24
     spec: 1
     implementation: |
-      讀：一行「位址加名稱」收成 domain 與它的位址；不是的行跳過、算進跳過的行數（README）
-      寫：照 profile 寫整個檔（README）；寫出來的檔長什麼樣（註解、排法）：不知道
+      讀：# 之後是註解；一行是一個位址加一個以上的名稱，位址要是 IPv4 或 IPv6、每個名稱要合 task 18 的規則，不合的整行跳過、算進跳過的行數；空行不算
+      同一個名稱在好幾行（大小寫不分）收成一個 domain，位址照出現的順序、重複的只留一個
+      寫：照 profile 寫整個檔：開頭兩行註解「# Written by hostu from the profile "<profile>".」、「# hostu writes this whole file again when you activate a profile: change it in hostu.」，接著每個 domain 的每個位址一行「<位址，補成一樣寬>  <domain>」；Windows 用 CRLF
+      寫出來的再讀回去跟 profile 一樣
     test: [TestParse, TestFormatReadsBack]
   - id: 25
     spec: 1
     implementation: |
-      啟動時讀 hosts 檔，寫完之後再讀一次（README），拿來跟生效中的 profile 比（task 7）
-      讀不了時：不知道（測試名稱是 TestHostsFileCantBeRead）
+      啟動時（MOVE ASIDE 都問完之後）讀 hosts 檔；啟用寫完之後再讀一次；匯入時讀當下的（task 17）。不監看
+      讀不了（例：沒有權限、是一個目錄）：hosts 檔不是 hostu 自己的東西，不問 MOVE ASIDE；開 error popup「CAN'T READ: <路徑>」與原因，App Log 記進去（footer 的 ! 提醒有錯誤），hostu 照常開著，statusbar 寫 (can't read)（task 7）
     test: [TestHostsFileCantBeRead]
   - id: 26
     spec: 1
     implementation: |
-      啟動時 config.yaml 或 profiles.yaml 讀不了：開 MOVE ASIDE 的 confirm，一次一個（e0dd1cd）；問句「Move it to <name>.bak and start fresh?」（0215cc7，terminu-go v0.4.4）
-      寫出路徑與原因：原因不帶「yaml: 」、在一列，值的種類不對時用使用者的話說（e0dd1cd）
-      Enter：改名成 .bak（有了就 .bak.1…）（e0dd1cd）；config.yaml 照預設、不建新的（2b78611）；profiles.yaml 像第一次打開一樣建（e0dd1cd）；App Log 記「Moved … to …」（184ac4b）
-      Esc：離開，原因寫到 stderr；在這之前什麼都不寫（e0dd1cd）
+      啟動時 config.yaml 或 profiles.yaml 讀不了：開 terminu-go 的 MOVE ASIDE confirm（App.MoveAside），一次一個、先 config.yaml
+      內容兩列：「<路徑> can't be read:」、原因（不帶「yaml: 」、在一列，值的種類不對時用使用者的話說）
+      問句寫實際會用的名字：「Move it to profiles.yaml.bak and start fresh?」，.bak 已經有了就寫 .bak.1（.bak.2…）；hint Enter:move Esc:quit
+      Enter：改名成問句寫的名字，一律不蓋掉；config.yaml 照預設、不建新的；profiles.yaml 像第一次打開一樣建（task 8）；App Log 記「Moved <路徑> to <新路徑>」
+      Esc：離開 hostu；Run 回傳「<路徑> can't be read: <原因>」，main 印成「hostu: <路徑> can't be read: <原因>」到 stderr，exit 1；在這之前什麼都不寫（讀不了的檔、hosts 檔都不動）
     test: [TestBrokenProfilesEscQuits, TestBrokenProfilesMovedAside, TestBrokenConfigThenProfiles, TestBrokenConfigAtTheFirstStart, TestLoadBroken]
   - id: 27
     spec: 1
@@ -188,7 +216,8 @@ tasks:
   - id: 28
     spec: 1
     implementation: |
-      q：離開（README）；直接離開還是先問：不知道
+      q 與 Ctrl-C：terminu-go 的離開流程，hostu 沒有自己的（沒設 App.Quit）：panel 上直接離開；有 popup 開著時 terminu-go 先問「Quit hostu?」
+      global operation popup 的離開那一列說明寫「leave hostu」
     test: [TestQuit]
   - id: 29
     spec: 1
@@ -198,9 +227,10 @@ tasks:
   - id: 30
     spec: 1
     implementation: |
-      install.sh、uninstall.sh、install.ps1、uninstall.ps1、.goreleaser.yaml（Homebrew tap、Scoop bucket）（8c5b006）；e0dd1cd 改了 uninstall.ps1 與 Homebrew caveats 寫的位置
-      移除腳本刪 profile 與 hosts.original 之前先問；移除 hostu 不動 hosts 檔（README）
-      跟 tdp 的範本差在哪：不知道
+      install.sh、uninstall.sh、.goreleaser.yaml、.github/workflows/release.yml 照 tdp v0.10.2 的範本，只差範本允許的地方：install.sh 的 WINDOWS="yes" 與 app's own 段落多一句寫 hosts 檔要 sudo（或 doas）；uninstall.sh 的 app's own 段落寫 hosts 檔留在 hostu 最後寫的樣子；.goreleaser.yaml 打開 Windows 與 scoops（vulcanshen/scoop-bucket），description 與 caveats 寫 hostu 的；release.yml 的測試加 windows-latest
+      family.mk 照 v0.10.2 的範本原樣複製（含 dev target），不改
+      移除腳本照範本，設定與資料目錄（~/.hostu 裡有 profiles.yaml 與 hosts.original）各問一次才刪；不動 hosts 檔
+      install.ps1 裝到 %LOCALAPPDATA%\hostu；uninstall.ps1 刪執行檔，設定與資料目錄各問一次（y/N）才刪，最後說 hosts 檔留在 hostu 最後寫的樣子
     test:
       - commit: 8c5b006
       - commit: e0dd1cd

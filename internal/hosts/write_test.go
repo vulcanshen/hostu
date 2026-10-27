@@ -112,3 +112,25 @@ func TestWriteWindows(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 }
+
+// A copy that fails says why in the line of PowerShell's output that does;
+// all of it is kept for the App Log (tdp components.5).
+func TestWriteWindowsFails(t *testing.T) {
+	path := readOnly(t)
+	stand(t, "windows", []string{"gsudo"}, nil)
+	output = func(string, ...string) ([]byte, error) {
+		return []byte("Copy-Item : Access to the path is denied.\r\nAt line:1 char:1\r\n\r\n+ Copy-Item -LiteralPath 'x'\r\n"), errors.New("exit status 1")
+	}
+	_, err := Write(path, "x\n")
+	var te *ToolError
+	if !errors.As(err, &te) || err.Error() != "Could not write it with gsudo: Copy-Item : Access to the path is denied." {
+		t.Fatalf("%v", err)
+	}
+	if te.Output != "Copy-Item : Access to the path is denied. At line:1 char:1 + Copy-Item -LiteralPath 'x'" {
+		t.Fatalf("output %q", te.Output)
+	}
+	output = func(string, ...string) ([]byte, error) { return nil, errors.New("exit status 1") }
+	if _, err := Write(path, "x\n"); err == nil || err.Error() != "Could not write it with gsudo: exit status 1" {
+		t.Fatalf("%v", err)
+	}
+}

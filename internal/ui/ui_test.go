@@ -678,3 +678,81 @@ func TestSaveFailsKeepsTheInput(t *testing.T) {
 		t.Fatal("Enter did not try again")
 	}
 }
+
+// paste is text pasted into hostu.
+func paste(s string) tea.KeyMsg { return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(s), Paste: true} }
+
+// A name's spaces at either end go when it is confirmed; a control character
+// pasted in stops it, checked before the spaces go (tdp text, input).
+func TestNameSpacesAndControlCharacters(t *testing.T) {
+	t.Parallel()
+	hs := newHarness(t, 80, 40)
+	hs.keys("n", "  lab  ", "Enter")
+	if hs.h.store.Get("lab") == nil {
+		t.Fatalf("profiles %v", hs.h.store.Profiles)
+	}
+	hs.keys("n")
+	hs.send(paste("work\t"))
+	hs.keys("Enter")
+	hs.contains("Name can't have control characters")
+	if hs.h.store.Get("work") != nil {
+		t.Fatal("a name with a Tab was taken")
+	}
+}
+
+// Addresses go between spaces or commas; a Tab pasted in is a control
+// character, stopped (tdp input).
+func TestPastedTabInAddresses(t *testing.T) {
+	t.Parallel()
+	hs := newHarness(t, 80, 40)
+	hs.keys("Tab", "n", "j", "Enter")
+	hs.send(paste("10.0.0.1\t10.0.0.2"))
+	hs.keys("Enter")
+	hs.contains("Addresses can't have control characters")
+}
+
+// A write that fails shows the line of the tool's output that says why; all
+// it said is in the App Log (components, control characters).
+func TestWriteFailsSaysWhy(t *testing.T) {
+	t.Parallel()
+	hs := newHarness(t, 120, 40)
+	hs.send(written{p: hs.h.store.Get("home"), err: &hosts.ToolError{Tool: "gsudo",
+		Reason: "Access is denied.", Output: "Access is denied. At line:1 char:1"}})
+	hs.contains("WRITE FAILED", "Could not write it with gsudo: Access is denied.")
+	hs.lacks("At line:1")
+	hs.keys("Esc", "!")
+	hs.contains("Output of gsudo: Access is denied. At line:1 char:1")
+}
+
+// An empty list's hint keeps only the keys for the whole panel: no Enter, no
+// key for an item (tdp panel.1, M6). With no profile, [2] has none at all.
+func TestEmptyListsHint(t *testing.T) {
+	t.Parallel()
+	hs := start(t, sandbox(t, "profiles: []\n"), 120, 40)
+	hs.contains("No profiles yet", "No profile to show", "n:new")
+	hs.lacks("Enter:activate", "p:preview", "Enter:edit")
+	if n := strings.Count(hs.text(), "n:new"); n != 1 {
+		t.Fatalf("n:new is there %d times:\n%s", n, hs.text())
+	}
+	hs.keys("n", "lab", "Enter")
+	hs.contains("No domains in lab", "Enter:activate p:preview n:new")
+	if n := strings.Count(hs.text(), "n:new"); n != 2 {
+		t.Fatalf("[2] of an empty profile has no n:new:\n%s", hs.text())
+	}
+	hs.lacks("Enter:edit")
+}
+
+// Deleting from the Space menu leaves nothing for the menu to be about: it
+// closes once the confirm is accepted (tdp T1).
+func TestDeleteFromTheMenuClosesIt(t *testing.T) {
+	t.Parallel()
+	hs := newHarness(t, 80, 40)
+	hs.keys("j", "Space", "D")
+	hs.contains("DELETE: office")
+	hs.keys("Enter")
+	hs.lacks("ITEM OPERATION", "DELETE")
+	hs.keys("G", "Tab", "j", "Space", "D")
+	hs.contains("DELETE: nas.home")
+	hs.keys("Enter")
+	hs.lacks("ITEM OPERATION", "DELETE")
+}

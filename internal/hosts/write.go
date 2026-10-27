@@ -68,6 +68,30 @@ func Write(path, text string) (*Elevated, error) {
 	return &Elevated{Command: []string{tool, "cp", tmp.Name(), path}, Temp: tmp.Name()}, nil
 }
 
+// ToolError is a copy as the administrator that failed. Reason is the line of
+// the tool's output that says why, for the error popup; Output is all of its
+// lines on one, for the App Log (tdp components.5: text of many lines from
+// outside is not put whole in a short text).
+type ToolError struct {
+	Tool, Reason, Output string
+}
+
+func (e *ToolError) Error() string { return "Could not write it with " + e.Tool + ": " + e.Reason }
+
+// toolError is the failure of tool, which printed out and ended with err.
+func toolError(tool string, out []byte, err error) *ToolError {
+	var lines []string
+	for l := range strings.SplitSeq(string(out), "\n") {
+		if l = strings.TrimSpace(l); l != "" {
+			lines = append(lines, l)
+		}
+	}
+	if len(lines) == 0 {
+		return &ToolError{Tool: tool, Reason: err.Error(), Output: err.Error()}
+	}
+	return &ToolError{Tool: tool, Reason: lines[0], Output: strings.Join(lines, " ")}
+}
+
 // windowsCopy copies tmp over path as the administrator, by gsudo or by the
 // sudo Windows 11 has, either of which asks in a UAC window.
 func windowsCopy(tmp, path string) error {
@@ -78,7 +102,7 @@ func windowsCopy(tmp, path string) error {
 	quote := func(s string) string { return "'" + strings.ReplaceAll(s, "'", "''") + "'" }
 	if out, err := output(tool, "powershell", "-NoProfile", "-Command",
 		"Copy-Item -LiteralPath "+quote(tmp)+" -Destination "+quote(path)+" -Force"); err != nil {
-		return fmt.Errorf("Could not write it with %s: %s", tool, strings.TrimSpace(string(out)))
+		return toolError(tool, out, err)
 	}
 	return nil
 }
