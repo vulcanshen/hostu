@@ -656,15 +656,35 @@ func TestSudoAsksInATerminal(t *testing.T) {
 // the count of domains stays whole.
 func TestLongNameIsCut(t *testing.T) {
 	t.Parallel()
-	hs := start(t, sandbox(t, "active: default\nprofiles:\n  - name: default\n  - name: the client site in the north building\n    domains:\n      - domain: erp.client.lan\n        addresses: [172.16.8.10]\n"), 80, 24)
-	hs.contains("NAME", "DOMAINS", "the client…")
+	hs := start(t, sandbox(t, "active: default\nprofiles:\n  - name: default\n  - name: the client site in the north building\n    domains:\n      - domain: erp.client.lan\n        addresses: [172.16.8.10]\n"), 90, 24)
+	hs.contains("NAME", "DOMAINS", "the client")
 	hs.lacks("north building")
 	for _, l := range hs.frame() {
-		if strings.Contains(l, "the client…") && !strings.Contains(l, " 1 ") {
-			t.Fatalf("the count is not whole: %q", l)
+		if strings.Contains(l, "the client") && (!strings.Contains(l, "…") || !strings.Contains(l, " 1 ")) {
+			t.Fatalf("the name is not cut, or the count is not whole: %q", l)
 		}
 	}
 	hs.fullWidth("a long name")
+}
+
+// The active mark is a column of its own: NAME stands over the names, the
+// active one's and the others' alike, whatever an icon's width (tdp panel.5).
+func TestNameStandsOverTheNames(t *testing.T) {
+	eachIconWidth(t, []int{60, 120}, func(w int) string { return fmt.Sprintf("%d wide", w) }, func(t *testing.T, w int) {
+		hs := newHarness(t, w, 24)
+		col := func(s string) int {
+			for _, l := range hs.frame() {
+				if i := strings.Index(l, s); i >= 0 && strings.HasPrefix(l, "┃") {
+					return terminu.Width(l[:i])
+				}
+			}
+			t.Fatalf("no %q in [1]:\n%s", s, hs.text())
+			return 0
+		}
+		if n, a, o := col("NAME"), col("default"), col("office"); a != n || o != n {
+			t.Fatalf("NAME at %d, default (active) at %d, office at %d:\n%s", n, a, o, hs.text())
+		}
+	})
 }
 
 // A save that fails keeps the input open with its value, the error popup

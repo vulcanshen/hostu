@@ -97,8 +97,10 @@ func newHostu(env Env) *hostu {
 	h.a.InputTabWidth = cfg.InputTabWidth
 	h.load()
 
+	// The active mark is a column of its own, with no title: NAME stands
+	// over the names (tdp panel.5).
 	h.profiles = &terminu.List{
-		Columns:   []terminu.Column{{Title: "Name", Shrink: true}, {Title: "Domains", Number: true, Drop: 1}},
+		Columns:   []terminu.Column{{}, {Title: "Name", Shrink: true}, {Title: "Domains", Number: true, Drop: 1}},
 		EmptyFact: "No profiles yet",
 		EmptyHint: "Press [n] to make one, [i] to read the hosts file into one, or [Space] to see what you can do here",
 		OnMove:    func(terminu.Row) tea.Cmd { h.showDomains(); return nil },
@@ -251,12 +253,14 @@ func (h *hostu) readHosts() (skipped int) {
 // refresh shows the profiles as they are now.
 func (h *hostu) refresh() {
 	rows := make([]terminu.Row, len(h.store.Profiles))
-	blank := strings.Repeat(" ", terminu.Width(glyphActive)+1)
+	// The mark's column is as wide with no profile active: the names keep
+	// their place (tdp L2).
+	blank := strings.Repeat(" ", terminu.Width(glyphActive))
 	for i, p := range h.store.Profiles {
-		rows[i] = terminu.Row{ID: p.Name, Cells: []string{blank + p.Name, fmt.Sprint(len(p.Domains))}}
+		rows[i] = terminu.Row{ID: p.Name, Cells: []string{blank, p.Name, fmt.Sprint(len(p.Domains))}}
 		if p.Name == h.store.Active {
-			rows[i].Cells[0] = glyphActive + " " + p.Name
-			rows[i].Styled = [][]terminu.Span{{{Text: glyphActive, Style: terminu.Fg(terminu.Green)}, {Text: " " + p.Name}}}
+			rows[i].Cells[0] = glyphActive
+			rows[i].Styled = [][]terminu.Span{{{Text: glyphActive, Style: terminu.Fg(terminu.Green)}}}
 		}
 	}
 	h.profiles.SetRows(rows)

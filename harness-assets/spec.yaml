@@ -39,12 +39,14 @@ tasks:
     request: 命令列：`hostu` 啟動，`hostu version`（`-v`、`--version`）印出版本，`hostu help`（`-h`、`--help`）印出命令列的用法
     tdp: [tdp E1, tdp project.4]
   - id: 5
-    spec: 1
+    spec: 2
     request: "`[1] PROFILES` 列出存著的 profile；一次一個生效，綠色的勾標出 hosts 檔現在是哪一個"
-    tdp: [tdp panel.5, tdp panel.15, tdp screen.8, tdp P5, tdp M2, tdp panel.1, tdp M5]
+    tdp: [tdp panel.5, tdp panel.7, tdp L2, tdp panel.15, tdp screen.8, tdp P5, tdp M2, tdp panel.1, tdp M5]
     remark:
-      - 生效中的那一個名稱前面畫綠色的勾（tdp P5：領域的符號與顏色 app 可以自行決定）
-      - 兩欄：NAME 可以截短，DOMAINS 是數字靠右、寬度不變（tdp panel.5）
+      - 生效中的那一個畫綠色的勾（tdp P5：領域的符號與顏色 app 可以自行決定；tdp panel.7：這類領域的旗標屬於內容，app 可以自行決定）
+      - 三欄：勾、NAME、DOMAINS。勾自己一欄、沒有表頭，NAME 才對著名稱（tdp panel.5）；沒生效的列留一樣寬的空白，沒有 profile 生效時也一樣寬，換生效的 profile 時名稱不位移（tdp L2）。使用者 2026-10-27 看到勾畫在名稱那一格裡、NAME 對不到名稱，說要預留勾的欄位
+      - NAME 可以截短，DOMAINS 是數字靠右、寬度不變，放不下時先收（tdp panel.5）
+      - 勾的欄不借 terminu-go 的 Marks：那是整批標記（tdp panel.7 的 checkbox 勾），意思不同
   - id: 6
     spec: 1
     request: "`[2] DOMAINS` 是一個 profile 的 domain，每個 domain 一筆；一個 domain 可以指到好幾個位址（IPv4 與 IPv6）"

@@ -32,16 +32,16 @@ tasks:
     test:
       - commit: 8c5b006
   - id: 5
-    spec: 1
+    spec: 2
     implementation: |
-      [1] PROFILES 是 terminu-go 的清單：NAME（可以截短）、DOMAINS（domain 的數目，數字靠右，放不下時第一個收）兩欄
-      生效中的那一個名稱前面畫 nf-md-check_circle（Green，Row.Styled）；其他列前面留一樣寬的空白，名字對齊
+      [1] PROFILES 是 terminu-go 的清單，三欄：勾（Column 沒有 Title，表頭那一格空白）、NAME（可以截短，最少 12 格）、DOMAINS（domain 的數目，數字靠右，放不下時第一個收；[1] 要 28 欄以上、畫面 84 欄以上才放得下）
+      勾的欄：生效中的那一列是 nf-md-check_circle（Green，Row.Styled），其他列是一樣寬的空白（icon 的寬度，啟動時量、換尺寸時重畫）；NAME 的表頭與每一列的名稱同一欄，icon 佔一格或兩格都一樣
       順序是 profiles.yaml 裡的順序；新增、複製、匯入的加在最後。每次啟動同一份 profiles.yaml 畫出來一樣
       cursor 移動時 [2] 跟著換（task 6）
       空的時候（profiles.yaml 有、但一個 profile 都沒有）：「No profiles yet」、「Press [n] to make one, [i] to read the hosts file into one, or [Space] to see what you can do here」；item operation 沒有對象，Space menu 沒有那一區，hint 只剩 n:new（terminu-go 照 Action 的 Scope 拿掉）
       profiles.yaml 讀不了時不畫清單，先問 MOVE ASIDE（task 26）
       Space menu 的 item operation：[Enter] Activate、[p]review、[r]ename、[c]opy、[D]elete；panel operation：[n]ew、[i]mport（各 task）
-    test: [TestLongNameIsCut, TestSameEveryStart, TestEmptyListsHint]
+    test: [TestLongNameIsCut, TestNameStandsOverTheNames, TestSameEveryStart, TestEmptyListsHint]
   - id: 6
     spec: 1
     implementation: |
