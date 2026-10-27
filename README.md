@@ -23,8 +23,9 @@ into a profile named `default`, so nothing you had is lost.
 - **Writes only when you say so**: changing a profile changes only hostu's own `profiles.yaml`; the hosts file is written
   when you activate a profile, after a question that says how much it writes and warns when `localhost` is missing.
 - **Your old hosts file is kept**: before hostu first writes the hosts file, it keeps a copy of it as it was.
-- **Asks for sudo only to write**: run hostu as yourself; when the hosts file needs the administrator, sudo asks for the
-  password in a terminal inside hostu (on Windows, the system's UAC window).
+- **Asks for sudo only to write**: run hostu as yourself; when the hosts file needs the administrator, hostu asks for
+  sudo's password in a small popup and hands it to sudo alone (doas asks in a terminal inside hostu; on Windows, the
+  system's UAC window).
 - **Profiles from the hosts file**: read the hosts file as it is now into a new profile at any time.
 
 ## Install

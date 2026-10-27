@@ -1,6 +1,6 @@
-id: 3
-from: v0.11.2
-to: v0.11.3
+id: 4
+from: v0.11.3
+to: v0.11.5
 tasks:
   - id: 1
     spec: 2
@@ -39,14 +39,14 @@ tasks:
     request: 命令列：`hostu` 啟動，`hostu version`（`-v`、`--version`）印出版本，`hostu help`（`-h`、`--help`）印出命令列的用法
     tdp: [tdp E1, tdp project.4]
   - id: 5
-    spec: 2
-    request: "`[1] PROFILES` 列出存著的 profile；一次一個生效，綠色的勾標出 hosts 檔現在是哪一個"
-    tdp: [tdp panel.5, tdp panel.7, tdp L2, tdp panel.15, tdp screen.8, tdp P5, tdp M2, tdp panel.1, tdp M5]
+    spec: 4
+    request: "`[1] PROFILES` 列出存著的 profile；一次一個生效，綠色的勾標出 hosts 檔現在是哪一個，勾有自己的欄位，NAME 對著名稱"
+    tdp: [tdp panel.5, tdp panel.7, tdp L2, tdp panel.15, tdp screen.8, tdp P5, tdp M2, tdp panel.1, tdp M5, tdp E3]
     remark:
-      - 生效中的那一個畫綠色的勾（tdp P5：領域的符號與顏色 app 可以自行決定；tdp panel.7：這類領域的旗標屬於內容，app 可以自行決定）
-      - 三欄：勾、NAME、DOMAINS。勾自己一欄、沒有表頭，NAME 才對著名稱（tdp panel.5）；沒生效的列留一樣寬的空白，沒有 profile 生效時也一樣寬，換生效的 profile 時名稱不位移（tdp L2）。使用者 2026-10-27 看到勾畫在名稱那一格裡、NAME 對不到名稱，說要預留勾的欄位
-      - NAME 可以截短，DOMAINS 是數字靠右、寬度不變，放不下時先收（tdp panel.5）
-      - 勾的欄不借 terminu-go 的 Marks：那是整批標記（tdp panel.7 的 checkbox 勾），意思不同
+      - 生效中的那一個是旗標，畫在標記欄（tdp panel.7：不能標記的清單可以把一種旗標畫在標記欄，glyph 與顏色 app 可以自行決定）：Green 的 nf-md-check_circle
+      - "[1] 不能標記（沒有整批操作），標記欄只放這個旗標；每一列都留標記欄，沒生效的列空白，換生效的 profile 時名稱不位移（tdp panel.7、L2）。表頭的標記欄也空著，NAME 對著名稱（tdp panel.5）。使用者 2026-10-27 看到勾畫在名稱那一格裡、NAME 對不到名稱，說要預留勾的欄位"
+      - 兩欄：NAME、DOMAINS。NAME 可以截短，DOMAINS 是數字靠右、寬度不變，放不下時先收（tdp panel.5）
+      - 用 terminu-go 的 List.Flags 與 Row.Flag，不用 Marks：Marks 是整批標記（tdp panel.7 的 checkbox 勾），意思不同
   - id: 6
     spec: 1
     request: "`[2] DOMAINS` 是一個 profile 的 domain，每個 domain 一筆；一個 domain 可以指到好幾個位址（IPv4 與 IPv6）"
@@ -76,11 +76,14 @@ tasks:
       - profile 上最直觀的事就是啟用（tdp K3）；要先問（tdp F6：哪些動作要 confirm app 可以自行決定）
       - 沒有 localhost 的那一句是警告，用 Peach（tdp confirm.2：哪一句算警告 app 可以自行決定）
   - id: 10
-    spec: 3
-    request: 用自己的帳號跑 hostu；hosts 檔要管理員才寫得了時，sudo 在 hostu 裡的終端機問密碼（Windows 是系統的 UAC 視窗）。macOS、Linux 用 `sudo` 或 `doas`，Windows 用 `gsudo` 或 Windows 11 的 `sudo`
-    tdp: [tdp terminal.7, tdp terminal.4, tdp K10, tdp F1, tdp note.6, tdp components.5, tdp note.7, tdp F5, tdp popup.1]
+    spec: 4
+    request: 用自己的帳號跑 hostu；hosts 檔要管理員才寫得了時，用一個小框（password popup）問 sudo 的密碼，只交給 sudo（doas 在 hostu 裡的終端機自己問，Windows 是系統的 UAC 視窗）。macOS、Linux 用 `sudo` 或 `doas`，Windows 用 `gsudo` 或 Windows 11 的 `sudo`
+    tdp: [tdp terminal.7, tdp terminal.4, tdp E8, tdp K10, tdp F1, tdp note.6, tdp components.5, tdp note.7, tdp F5, tdp popup.1, tdp password, tdp input.2, tdp toast.1, tdp P5]
     remark:
-      - 照 tdp terminal.7：先試不用密碼的，要密碼才開 terminal popup 讓工具自己問；用哪個工具依平台 app 可以自行決定
+      - 照 tdp terminal.7：先試不用密碼的（sudo -n）；要密碼時開 PASSWORD 的 password popup，密碼只交給 sudo 的標準輸入。這些由 terminu-go 的 App.Elevate 做，hostu 只給要跑的指令，拿不到密碼（tdp E8）
+      - doas 不能從標準輸入讀密碼：開 terminal popup 讓它自己問，沒有歷史與選取模式（tdp terminal.7、terminal.4）。用哪個工具依平台 app 可以自行決定（tdp terminal.7）：sudo，沒有時 doas；Windows 用 gsudo 或 Windows 11 的 sudo，系統跳 UAC
+      - 在密碼框按 Esc 取消，什麼都不寫，不進 App Log（tdp note.7）
+      - 使用者 2026-10-27 手動測試時覺得撐滿畫面的 terminal popup 只問一行密碼太大，要改用 password popup；用 SendMessage 送給 terminu session，tdp v0.11.4 照著改了 terminal.7、terminu-go v0.6.4 加了 App.Elevate
   - id: 11
     spec: 3
     request: 舊的 hosts 檔留著：hostu 第一次寫 hosts 檔之前，先把它原樣留一份（`~/.hostu/hosts.original`）

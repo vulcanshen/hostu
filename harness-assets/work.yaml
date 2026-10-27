@@ -32,10 +32,10 @@ tasks:
     test:
       - commit: 8c5b006
   - id: 5
-    spec: 2
+    spec: 4
     implementation: |
-      [1] PROFILES 是 terminu-go 的清單，三欄：勾（Column 沒有 Title，表頭那一格空白）、NAME（可以截短，最少 12 格）、DOMAINS（domain 的數目，數字靠右，放不下時第一個收；[1] 要 28 欄以上、畫面 84 欄以上才放得下）
-      勾的欄：生效中的那一列是 nf-md-check_circle（Green，Row.Styled），其他列是一樣寬的空白（icon 的寬度，啟動時量、換尺寸時重畫）；NAME 的表頭與每一列的名稱同一欄，icon 佔一格或兩格都一樣
+      [1] PROFILES 是 terminu-go 的清單（List.Flags），標記欄之後兩欄：NAME（可以截短，最少 12 格）、DOMAINS（domain 的數目，數字靠右，放不下時第一個收；icon 佔一格時 [1] 要 26 欄、畫面 78 欄以上才放得下）
+      標記欄：生效中的那一列的旗標（Row.Flag）是 Green 的 nf-md-check_circle，其他列與表頭空白，寬度是 icon 的寬度加一格（terminu-go 畫）；NAME 的表頭與每一列的名稱同一欄，icon 佔一格或兩格都一樣
       順序是 profiles.yaml 裡的順序；新增、複製、匯入的加在最後。每次啟動同一份 profiles.yaml 畫出來一樣
       cursor 移動時 [2] 跟著換（task 6）
       空的時候（profiles.yaml 有、但一個 profile 都沒有）：「No profiles yet」、「Press [n] to make one, [i] to read the hosts file into one, or [Space] to see what you can do here」；item operation 沒有對象，Space menu 沒有那一區，hint 只剩 n:new（terminu-go 照 Action 的 Scope 拿掉）
@@ -79,16 +79,22 @@ tasks:
       Esc：什麼都不寫；已經生效的 profile 也可以再啟用一次（重寫 hosts 檔）
     test: [TestActivateWritesTheHostsFile, TestActivateEscWritesNothing, TestActivateWarnsWithoutLocalhost]
   - id: 10
-    spec: 3
+    spec: 4
     implementation: |
       hostu 用自己的帳號跑；寫 hosts 檔時先自己寫，可以就好
       沒有權限（permission denied）時，內容寫進暫存檔，以管理員身分複製過去：
-      macOS、Linux：用 sudo，沒有就 doas；先跑「<工具> -n cp <暫存檔> <hosts 檔>」不問密碼，成功就好；要密碼時開 terminal popup「SUDO: <hosts 檔路徑>」跑「<工具> cp <暫存檔> <hosts 檔>」，讓它自己問，跑完 popup 自己關；這個 PTY 沒有歷史與選取模式。結束碼不是 0：error popup「WRITE FAILED: <路徑>」「Could not write it with <工具>: <錯誤>.」
+      macOS、Linux：用 sudo，沒有就 doas；把「cp <暫存檔> <hosts 檔>」交給 terminu-go 的 App.Elevate（Verb write、Subject 是 hosts 檔），hostu 只給指令：
+      - sudo：terminu-go 先試 sudo -n，不用密碼就直接複製，不開任何東西；要密碼時開 PASSWORD 的 password popup（解鎖方案，Enter:write Backspace:clear Esc:cancel），密碼只交給 sudo -S；打錯時框不關、點清掉、錯誤列「Wrong password」
+      - doas：terminu-go 先試 doas -n，不用密碼就直接複製；要密碼時開 terminal popup 跑 doas，讓它自己問，跑完 popup 自己關；這個 PTY 沒有歷史與選取模式
+      - 複製成功：跟自己寫好一樣（task 9 的 toast），暫存檔刪掉
+      - 複製失敗（ElevateError）：error popup「WRITE FAILED: <路徑>」只寫說原因的那一行「Could not write it with <工具>: <輸出的第一個非空行>」（沒有輸出時寫結束的錯誤）；輸出好幾行時全文接成一列記進 App Log：Info「Output of <工具>: <全部的行>」；暫存檔刪掉
+      - 在密碼框按 Esc：複製不跑，暫存檔刪掉，hosts 檔與生效中的 profile 不變，App Log 不記
+      密碼 hostu 拿不到：不寫進檔案、不進 App Log、不出現在畫面上
       都沒有：error popup「WRITE FAILED: <路徑>」「No permission to write <路徑>, and neither sudo nor doas is there to write it as the administrator.」
       Windows：用 gsudo，沒有就 Windows 11 的 sudo，跑 powershell 的 Copy-Item，系統跳 UAC；都沒有「No permission to write <路徑>. Install gsudo (scoop install gsudo), or open the terminal as the administrator.」
       Windows 的複製失敗：error popup「WRITE FAILED: <路徑>」只寫說原因的那一行「Could not write it with <工具>: <輸出的第一個非空行>」（沒有輸出時寫結束的錯誤）；輸出好幾行時，全文接成一列記進 App Log：Info「Output of <工具>: <全部的行>」
-      其他寫入錯誤直接開 error popup；暫存檔用完刪掉。密碼不經過 hostu
-    test: [TestWriteItself, TestWriteSudoWithoutAsking, TestWriteSudoWantsAPassword, TestWriteNoSudo, TestWriteWindows, TestWriteWindowsFails, TestWriteFailsSaysWhy, TestSudoAsksInATerminal]
+      其他寫入錯誤直接開 error popup；暫存檔用完刪掉
+    test: [TestWriteItself, TestWriteHandsTheCopyBack, TestWriteNoSudo, TestWriteWindows, TestWriteWindowsFails, TestWriteFailsSaysWhy, TestSudoAsksForThePassword, TestSudoEscWritesNothing, TestSudoCopyFails, TestDoasAsksInATerminal]
   - id: 11
     spec: 3
     implementation: |
@@ -232,7 +238,7 @@ tasks:
   - id: 30
     spec: 2
     implementation: |
-      install.sh、uninstall.sh、.goreleaser.yaml、.github/workflows/release.yml 照 tdp v0.11.3 的範本（v0.10.3 起範本沒變），只差範本允許的地方：install.sh 的 WINDOWS="yes" 與 app's own 段落多一句寫 hosts 檔要 sudo（或 doas）；uninstall.sh 的 app's own 段落寫 hosts 檔留在 hostu 最後寫的樣子；.goreleaser.yaml 打開 Windows 與 scoops（vulcanshen/scoop-bucket），description 與 caveats 寫 hostu 的；release.yml 的測試加 windows-latest
+      install.sh、uninstall.sh、.goreleaser.yaml、.github/workflows/release.yml 照 tdp v0.11.5 的範本（v0.10.3 起範本沒變），只差範本允許的地方：install.sh 的 WINDOWS="yes" 與 app's own 段落多一句寫 hosts 檔要 sudo（或 doas）；uninstall.sh 的 app's own 段落寫 hosts 檔留在 hostu 最後寫的樣子；.goreleaser.yaml 打開 Windows 與 scoops（vulcanshen/scoop-bucket），description 與 caveats 寫 hostu 的；release.yml 的測試加 windows-latest
       family.mk 照範本原樣複製（含 dev target），不改
       移除腳本照範本，設定與資料目錄（~/.hostu 裡有 profiles.yaml 與 hosts.original）各問一次才刪；不動 hosts 檔
       install.ps1 裝到 %LOCALAPPDATA%\hostu；uninstall.ps1 刪執行檔，設定與資料目錄各問一次（y/N）才刪，最後說 hosts 檔留在 hostu 最後寫的樣子

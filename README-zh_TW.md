@@ -21,8 +21,8 @@ domain 指到一個或好幾個位址；在表單裡一筆一筆加、改，不�
 - **說了才寫**：改 profile 只改 hostu 自己的 `profiles.yaml`；啟用 profile 時才寫 hosts 檔，寫之前先問，寫出會寫幾個 domain，
   沒有 `localhost` 時警告。
 - **舊的 hosts 檔留著**：hostu 第一次寫 hosts 檔之前，先把它原樣留一份。
-- **只有寫的時候才要 sudo**：用自己的帳號跑 hostu；hosts 檔要管理員才寫得了時，sudo 在 hostu 裡的終端機問密碼（Windows 是系統的
-  UAC 視窗）。
+- **只有寫的時候才要 sudo**：用自己的帳號跑 hostu；hosts 檔要管理員才寫得了時，hostu 開一個小框問 sudo 的密碼，只交給 sudo
+  （doas 在 hostu 裡的終端機自己問；Windows 是系統的 UAC 視窗）。
 - **從 hosts 檔建 profile**：隨時可以把 hosts 檔現在的內容讀成一個新的 profile。
 
 ## 安裝

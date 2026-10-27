@@ -24,3 +24,10 @@
 - hostu 照 profile 寫整個 hosts 檔：自己在 hosts 檔寫的註解與內容不會留在裡面。
 - hosts 檔裡不是「位址加名稱」的行不會讀進 profile。
 - hostu 不監看 hosts 檔：啟動時與寫完之後才讀。
+
+
+## 使用者後來改的
+
+- 2026-10-27，看到生效的勾畫在名稱那一格裡：「左邊 side bar 對其很有問題，應該要有預留一個 checked 的欄位，這樣才會對其」
+- 2026-10-27，寫 hosts 檔要 sudo 密碼時開了撐滿畫面的終端機：「跳 sudo password 的視窗也太大了吧... 有需要嗎?」「這沒辦法套用 PIN
+  的 popup 表示方式嗎?」；選了「改用 password popup 收密碼」

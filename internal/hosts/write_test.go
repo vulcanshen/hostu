@@ -14,8 +14,8 @@ import (
 func stand(t *testing.T, system string, installed []string, do func(name string, args []string) error) *[][]string {
 	t.Helper()
 	var runs [][]string
-	oldRun, oldOut, oldLook, oldGOOS := run, output, lookPath, goos
-	t.Cleanup(func() { run, output, lookPath, goos = oldRun, oldOut, oldLook, oldGOOS })
+	oldOut, oldLook, oldGOOS := output, lookPath, goos
+	t.Cleanup(func() { output, lookPath, goos = oldOut, oldLook, oldGOOS })
 	goos = system
 	lookPath = func(n string) (string, error) {
 		if slices.Contains(installed, n) {
@@ -23,11 +23,10 @@ func stand(t *testing.T, system string, installed []string, do func(name string,
 		}
 		return "", errors.New("not found")
 	}
-	run = func(name string, args ...string) error {
+	output = func(name string, args ...string) ([]byte, error) {
 		runs = append(runs, append([]string{name}, args...))
-		return do(name, args)
+		return nil, do(name, args)
 	}
-	output = func(name string, args ...string) ([]byte, error) { return nil, run(name, args...) }
 	return &runs
 }
 
@@ -56,36 +55,30 @@ func TestWriteItself(t *testing.T) {
 	}
 }
 
-// sudo without asking: a password typed a moment ago is enough.
-func TestWriteSudoWithoutAsking(t *testing.T) {
+// Elsewhere than Windows the copy is handed back, to run as the administrator
+// with sudo, or doas when there is no sudo; Write runs neither (tdp
+// terminal.7).
+func TestWriteHandsTheCopyBack(t *testing.T) {
 	path := readOnly(t)
-	runs := stand(t, "linux", []string{"sudo", "doas"}, func(string, []string) error { return nil })
-	e, err := Write(path, "x\n")
-	if e != nil || err != nil {
-		t.Fatalf("%v %v", e, err)
-	}
-	if len(*runs) != 1 || strings.Join((*runs)[0][:3], " ") != "sudo -n cp" || (*runs)[0][4] != path {
-		t.Fatalf("ran %v", *runs)
-	}
-	if _, err := os.Stat((*runs)[0][3]); err == nil {
-		t.Fatal("the temporary file is left")
-	}
-}
-
-// sudo that wants a password: the copy is handed back, to run in a terminal.
-func TestWriteSudoWantsAPassword(t *testing.T) {
-	path := readOnly(t)
-	stand(t, "darwin", []string{"doas"}, func(string, []string) error { return errors.New("a password is required") })
-	e, err := Write(path, "x\n")
-	if err != nil || e == nil {
-		t.Fatalf("%v %v", e, err)
-	}
-	defer e.Done()
-	if strings.Join(e.Command, " ") != "doas cp "+e.Temp+" "+path {
-		t.Fatalf("the copy is %v", e.Command)
-	}
-	if b, _ := os.ReadFile(e.Temp); string(b) != "x\n" {
-		t.Fatalf("the temporary file has %q", b)
+	for _, c := range []struct {
+		installed []string
+		tool      string
+	}{{[]string{"sudo", "doas"}, "sudo"}, {[]string{"doas"}, "doas"}} {
+		runs := stand(t, "darwin", c.installed, func(string, []string) error { return errors.New("no tool should run") })
+		e, err := Write(path, "x\n")
+		if err != nil || e == nil {
+			t.Fatalf("%v %v", e, err)
+		}
+		if e.Tool != c.tool || strings.Join(e.Command, " ") != "cp "+e.Temp+" "+path || len(*runs) > 0 {
+			t.Fatalf("with %v the copy is %s %v, ran %v", c.installed, e.Tool, e.Command, *runs)
+		}
+		if b, _ := os.ReadFile(e.Temp); string(b) != "x\n" {
+			t.Fatalf("the temporary file has %q", b)
+		}
+		e.Done()
+		if _, err := os.Stat(e.Temp); err == nil {
+			t.Fatal("the temporary file is left")
+		}
 	}
 }
 

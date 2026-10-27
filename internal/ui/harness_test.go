@@ -50,11 +50,53 @@ type harness struct {
 	quit bool // the program asked to quit
 }
 
+// fakeSudo stands in for sudo: it keeps no password (-n fails), and the
+// password is hunter2. A wrong one is asked for again, which the lib takes
+// as wrong (tdp terminal.7).
+const fakeSudo = `#!/bin/sh
+case "$1" in
+-n) echo "sudo: a password is required" >&2; exit 1 ;;
+-S) prompt=$3; shift 3 ;;
+*) exit 2 ;;
+esac
+printf "%s" "$prompt" >&2
+read -r pw
+if [ "$pw" != hunter2 ]; then
+	echo "Sorry, try again." >&2
+	printf "%s" "$prompt" >&2
+	read -r pw
+	exit 1
+fi
+[ "$1" = -v ] && exit 0
+shift
+exec "$@"
+`
+
+// fakeDoas stands in for doas: it asks for nothing, but -n fails.
+const fakeDoas = `#!/bin/sh
+[ "$1" = -n ] && exit 1
+shift
+exec "$@"
+`
+
 // TestMain makes an icon and a powerline symbol one cell each; a test that
-// changes them does it while no other test runs.
+// changes them does it while no other test runs. sudo and doas are stood in
+// for, first on the PATH: no test runs the real ones.
 func TestMain(m *testing.M) {
 	terminu.SetIconWidth(1, 1)
-	os.Exit(m.Run())
+	dir, err := os.MkdirTemp("", "hu")
+	if err != nil {
+		panic(err)
+	}
+	for name, script := range map[string]string{"sudo": fakeSudo, "doas": fakeDoas} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(script), 0o755); err != nil {
+			panic(err)
+		}
+	}
+	os.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	code := m.Run()
+	os.RemoveAll(dir)
+	os.Exit(code)
 }
 
 // sandbox is an Env in a new temporary directory: the hosts file a system

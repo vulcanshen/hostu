@@ -8,7 +8,8 @@ Each release names the version of terminu design (tdp) it follows.
   of the one under the cursor, each going to one address or more.
 - `Enter` on a profile activates it: after a question that says how much it writes, and warns when it has no
   `localhost`, hostu writes the whole hosts file from it. When the file needs the administrator, `sudo -n` is tried
-  first, then sudo asks for the password in a terminal inside hostu; on Windows, gsudo or sudo asks in a UAC window.
+  first, then hostu asks for sudo's password in a `PASSWORD` popup and hands it to sudo alone (doas asks in a terminal
+  inside hostu); on Windows, gsudo or sudo asks in a UAC window.
 - The hosts file as it was is kept in `~/.hostu/hosts.original` before hostu first writes it.
 - The first start reads the hosts file into a profile named `default`; `i` reads it into a new profile at any time.
 - Profiles: new, rename, copy, delete (not the active one), and a preview of the hosts file each writes.

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -48,7 +49,8 @@ var states = []struct {
 }
 
 // ownPopups are the popups hostu opens by what happens rather than by a key:
-// the toasts, an error popup, MOVE ASIDE, sudo's terminal popup, the App Log
+// the toasts, an error popup, MOVE ASIDE, sudo's password popup, doas's
+// terminal popup, the App Log
 // with an entry of each level. env, when set, is where
 // hostu starts instead of the officeAndHome sandbox; then runs once it has
 // started.
@@ -81,9 +83,12 @@ var ownPopups = []struct {
 		hs.h.a.Log(terminu.Error, "an error")
 		hs.keys("!")
 	}},
-	{"sudo's terminal popup", nil, func(hs *harness) {
+	{"sudo's password popup", nil, func(hs *harness) {
+		hs.send(written{p: hs.h.store.Get("home"), elevated: hs.elevated("sudo", "")})
+	}},
+	{"doas's terminal popup", nil, func(hs *harness) {
 		hs.send(written{p: hs.h.store.Get("home"),
-			elevated: &hosts.Elevated{Command: []string{"sh", "-c", "sleep 2"}, Temp: filepath.Join(hs.env.Data, "none")}})
+			elevated: &hosts.Elevated{Tool: "doas", Command: []string{"sh", "-c", "sleep 2"}, Temp: filepath.Join(hs.env.Data, "none")}})
 	}},
 }
 
@@ -630,26 +635,116 @@ func TestQuit(t *testing.T) {
 	}
 }
 
-// sudo that wants a password asks in a terminal popup; once the copy has
-// run, the profile is the active one and the temporary file is gone. sh
-// stands in for sudo here.
-func TestSudoAsksInATerminal(t *testing.T) {
+// elevated is a write left to tool: the copy of a temporary file with text
+// over the hosts file.
+func (hs *harness) elevated(tool, text string) *hosts.Elevated {
+	tmp := filepath.Join(hs.t.TempDir(), "copy")
+	if err := os.WriteFile(tmp, []byte(text), 0o644); err != nil {
+		hs.t.Fatal(err)
+	}
+	return &hosts.Elevated{Tool: tool, Command: []string{"cp", tmp, hs.env.Hosts}, Temp: tmp}
+}
+
+// written is what the hosts file has once e has run, the profile the
+// active one and the temporary file gone.
+func (hs *harness) written(e *hosts.Elevated, text string) {
+	hs.t.Helper()
+	if hs.h.store.Active != "home" {
+		hs.t.Fatalf("the active profile is %s:\n%s", hs.h.store.Active, hs.text())
+	}
+	if b, _ := os.ReadFile(hs.env.Hosts); string(b) != text {
+		hs.t.Fatalf("the hosts file has %q", b)
+	}
+	if _, err := os.Stat(e.Temp); err == nil {
+		hs.t.Fatal("the temporary file is left")
+	}
+	hs.contains("Wrote home to " + hs.env.Hosts)
+}
+
+// sudo that wants a password: the lib asks for it in PASSWORD, a wrong one
+// again, and the right one writes the hosts file. The password is not on the
+// screen, nor in the App Log (tdp terminal.7).
+func TestSudoAsksForThePassword(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows asks in a UAC window")
+	}
 	t.Parallel()
 	hs := newHarness(t, 80, 40)
-	tmp, _ := os.CreateTemp(t.TempDir(), "copy")
-	tmp.Close()
-	home := hs.h.store.Get("home")
-	hs.send(written{p: home, elevated: &hosts.Elevated{Command: []string{"sh", "-c", "sleep 0.1"}, Temp: tmp.Name()}})
+	e := hs.elevated("sudo", "10.0.0.9  copied\n")
+	hs.send(written{p: hs.h.store.Get("home"), elevated: e})
+	hs.contains("PASSWORD")
+	hs.keys("hunter3")
+	hs.lacks("hunter3")
+	hs.keys("Enter")
+	hs.contains("PASSWORD", "Wrong password")
+	if hs.h.store.Active != "default" {
+		t.Fatalf("a wrong password made %s the active profile", hs.h.store.Active)
+	}
+	hs.keys("hunter2", "Enter")
+	hs.written(e, "10.0.0.9  copied\n")
+	hs.keys("Esc", "!")
+	hs.contains("Wrote home")
+	hs.lacks("hunter")
+}
+
+// Esc on the password writes nothing and is not logged (tdp terminal.7,
+// note.7).
+func TestSudoEscWritesNothing(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows asks in a UAC window")
+	}
+	t.Parallel()
+	hs := newHarness(t, 80, 40)
+	e := hs.elevated("sudo", "10.0.0.9  copied\n")
+	hs.send(written{p: hs.h.store.Get("home"), elevated: e})
+	hs.keys("Esc")
+	hs.lacks("PASSWORD")
+	if b, _ := os.ReadFile(hs.env.Hosts); string(b) != systemHosts || hs.h.store.Active != "default" {
+		t.Fatalf("the hosts file has %q, %s active", b, hs.h.store.Active)
+	}
+	if _, err := os.Stat(e.Temp); err == nil {
+		t.Fatal("the temporary file is left")
+	}
+	hs.keys("!")
+	hs.lacks("Wrote", "Write failed")
+}
+
+// A copy that fails once the password is right says why in an error popup:
+// the line cp printed.
+func TestSudoCopyFails(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows asks in a UAC window")
+	}
+	t.Parallel()
+	hs := newHarness(t, 120, 40)
+	e := hs.elevated("sudo", "x\n")
+	e.Command[2] = filepath.Join(hs.t.TempDir(), "none", "hosts")
+	hs.send(written{p: hs.h.store.Get("home"), elevated: e})
+	hs.keys("hunter2", "Enter")
+	hs.contains("WRITE FAILED", "Could not write it with sudo: cp:")
+	hs.lacks("PASSWORD")
+	if hs.h.store.Active != "default" {
+		t.Fatalf("a failed copy made %s the active profile", hs.h.store.Active)
+	}
+	if _, err := os.Stat(e.Temp); err == nil {
+		t.Fatal("the temporary file is left")
+	}
+}
+
+// doas reads no password from its input: it asks in a terminal popup, which
+// closes once the copy has run (tdp terminal.7).
+func TestDoasAsksInATerminal(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows asks in a UAC window")
+	}
+	t.Parallel()
+	hs := newHarness(t, 80, 40)
+	e := hs.elevated("doas", "10.0.0.9  copied\n")
+	hs.send(written{p: hs.h.store.Get("home"), elevated: e})
 	for i := 0; i < 20 && hs.h.store.Active != "home"; i++ {
 		hs.send(nil)
 	}
-	if hs.h.store.Active != "home" {
-		t.Fatalf("the active profile is %s:\n%s", hs.h.store.Active, hs.text())
-	}
-	if _, err := os.Stat(tmp.Name()); err == nil {
-		t.Fatal("the temporary file is left")
-	}
-	hs.contains("Wrote home to " + hs.env.Hosts)
+	hs.written(e, "10.0.0.9  copied\n")
 }
 
 // A long name is cut and the short columns keep their width (layout/panel):
@@ -667,8 +762,9 @@ func TestLongNameIsCut(t *testing.T) {
 	hs.fullWidth("a long name")
 }
 
-// The active mark is a column of its own: NAME stands over the names, the
-// active one's and the others' alike, whatever an icon's width (tdp panel.5).
+// The active profile's flag is in the mark column: NAME stands over the
+// names, the active one's and the others' alike, whatever an icon's width
+// (tdp panel.5, panel.7).
 func TestNameStandsOverTheNames(t *testing.T) {
 	eachIconWidth(t, []int{60, 120}, func(w int) string { return fmt.Sprintf("%d wide", w) }, func(t *testing.T, w int) {
 		hs := newHarness(t, w, 24)

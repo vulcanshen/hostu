@@ -18,8 +18,8 @@ import (
 // data directory (tdp E3: lost for good when deleted).
 const original = "hosts.original"
 
-// written is a write of the hosts file that has ended: elevated when it waits
-// for a password.
+// written is a write of the hosts file that has ended: elevated when the copy
+// is left to run as the administrator.
 type written struct {
 	p        *profile.Profile
 	elevated *hosts.Elevated
@@ -39,8 +39,8 @@ func (h *hostu) activateAsk(p *profile.Profile) *terminu.Ask {
 	return ask
 }
 
-// activate writes p to the hosts file, off the update loop: sudo may take a
-// moment, and Windows' UAC waits for the user.
+// activate writes p to the hosts file, off the update loop: Windows' UAC
+// waits for the user.
 func (h *hostu) activate(p *profile.Profile) tea.Cmd {
 	text := hosts.Format(p.Name, p.Domains)
 	path, data := h.env.Hosts, h.env.Data
@@ -86,28 +86,43 @@ func (h *hostu) onMsg(msg tea.Msg) tea.Cmd {
 	}
 	switch {
 	case w.err != nil:
-		cmd := h.a.ErrorAbout("Write failed", h.env.Hosts, sentence(w.err))
-		// The popup has the line that says why; all the tool said goes in
-		// the App Log (components, control characters).
-		var te *hosts.ToolError
-		if errors.As(w.err, &te) && te.Output != te.Reason {
-			h.a.Log(terminu.Info, "Output of "+te.Tool+": "+te.Output)
-		}
-		return cmd
+		return h.writeFailed(w.err)
 	case w.elevated != nil:
-		// sudo wants a password: it asks in a terminal popup, which closes
-		// when the copy ends (components/dialog/terminal).
+		// The lib copies it as the administrator: at once when sudo needs no
+		// password; otherwise it asks for it in a password popup, and hostu
+		// never sees it. doas asks in a terminal popup (tdp terminal.7).
 		e := w.elevated
-		return h.a.OpenTerminal(&terminu.Terminal{Title: "Sudo", Subject: h.env.Hosts, Command: e.Command, Ends: true,
-			OnExit: func(err error) tea.Cmd {
+		tool := terminu.Sudo
+		if e.Tool == "doas" {
+			tool = terminu.Doas
+		}
+		return h.a.Elevate(terminu.Elevate{Tool: tool, Command: e.Command, Verb: "write", Subject: h.env.Hosts,
+			Done: func(err error) tea.Cmd {
 				e.Done()
-				if err != nil {
-					return h.a.ErrorAbout("Write failed", h.env.Hosts, sentence(fmt.Errorf("could not write it with %s: %v", e.Command[0], err)))
+				var ee *terminu.ElevateError
+				switch {
+				case errors.As(err, &ee):
+					return h.writeFailed(hosts.Failed(e.Tool, ee.Lines, ee.Err))
+				case err != nil:
+					return h.writeFailed(err)
 				}
 				return h.wrote(w.p)
-			}})
+			},
+			OnCancel: func() tea.Cmd { e.Done(); return nil }})
 	}
 	return h.wrote(w.p)
+}
+
+// writeFailed says why the hosts file was not written.
+func (h *hostu) writeFailed(err error) tea.Cmd {
+	cmd := h.a.ErrorAbout("Write failed", h.env.Hosts, sentence(err))
+	// The popup has the line that says why; all the tool said goes in the
+	// App Log (components, control characters).
+	var te *hosts.ToolError
+	if errors.As(err, &te) && te.Output != te.Reason {
+		h.a.Log(terminu.Info, "Output of "+te.Tool+": "+te.Output)
+	}
+	return cmd
 }
 
 // wrote makes p the active profile once the hosts file has it.

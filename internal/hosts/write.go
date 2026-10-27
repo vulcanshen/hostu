@@ -10,10 +10,11 @@ import (
 	"strings"
 )
 
-// Elevated is a copy that waits for a password: Command copies Temp over the
-// hosts file as the administrator, to be run in a terminal where sudo or
-// doas can ask. Done removes Temp once it has run.
+// Elevated is a copy hostu may not make itself: Command copies Temp over the
+// hosts file, to run as the administrator with Tool, sudo or doas (tdp
+// terminal.7). Done removes Temp once it has run.
 type Elevated struct {
+	Tool    string
 	Command []string
 	Temp    string
 }
@@ -21,9 +22,8 @@ type Elevated struct {
 // Done removes the temporary file.
 func (e *Elevated) Done() { os.Remove(e.Temp) }
 
-// run and lookPath are exec's, for the tests to stand in for.
+// output and lookPath are exec's, for the tests to stand in for.
 var (
-	run      = func(name string, args ...string) error { return exec.Command(name, args...).Run() }
 	output   = func(name string, args ...string) ([]byte, error) { return exec.Command(name, args...).CombinedOutput() }
 	lookPath = exec.LookPath
 	goos     = runtime.GOOS
@@ -32,9 +32,8 @@ var (
 // Write replaces the hosts file at path with text. It writes the file itself
 // when it may. Otherwise the text goes in a temporary file that is copied
 // over the hosts file as the administrator: on Windows by gsudo or sudo,
-// which ask in a window of their own (UAC); elsewhere by sudo or doas without
-// asking (-n), and when they want a password Write returns the copy to run
-// in a terminal.
+// which ask in a window of their own (UAC); elsewhere Write returns the copy
+// to run with sudo, or doas when there is no sudo.
 func Write(path, text string) (*Elevated, error) {
 	err := os.WriteFile(path, []byte(text), 0o644)
 	if err == nil || !errors.Is(err, fs.ErrPermission) {
@@ -61,11 +60,7 @@ func Write(path, text string) (*Elevated, error) {
 		os.Remove(tmp.Name())
 		return nil, fmt.Errorf("No permission to write %s, and neither sudo nor doas is there to write it as the administrator.", path)
 	}
-	if run(tool, "-n", "cp", tmp.Name(), path) == nil {
-		os.Remove(tmp.Name())
-		return nil, nil
-	}
-	return &Elevated{Command: []string{tool, "cp", tmp.Name(), path}, Temp: tmp.Name()}, nil
+	return &Elevated{Tool: tool, Command: []string{"cp", tmp.Name(), path}, Temp: tmp.Name()}, nil
 }
 
 // ToolError is a copy as the administrator that failed. Reason is the line of
@@ -86,6 +81,12 @@ func toolError(tool string, out []byte, err error) *ToolError {
 			lines = append(lines, l)
 		}
 	}
+	return Failed(tool, lines, err)
+}
+
+// Failed is the failure of tool, which printed lines, none of them blank, and
+// ended with err.
+func Failed(tool string, lines []string, err error) *ToolError {
 	if len(lines) == 0 {
 		return &ToolError{Tool: tool, Reason: err.Error(), Output: err.Error()}
 	}
