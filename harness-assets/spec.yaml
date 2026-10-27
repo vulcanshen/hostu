@@ -1,11 +1,11 @@
-id: 4
-from: v0.11.3
-to: v0.11.5
+id: 5
+from: v0.11.5
+to: v1.0.0
 tasks:
   - id: 1
     spec: 2
     request: 一個畫面：最上面一列 statusbar，下面兩個 panel，`[1] PROFILES` 是存著的 profile，`[2] DOMAINS` 是一個 profile 的 domain
-    tdp: [tdp screen.1, tdp screen.2, tdp panel.1, tdp panel.4, tdp L1, tdp components.4, tdp components.5, tdp panel.13, tdp L4]
+    tdp: [tdp screen.1, tdp screen.2, tdp panel.1, tdp panel.4, tdp L1, tdp components.4, tdp components.5, tdp panel.13, tdp L4, tdp screen.4, tdp screen.5]
     remark:
       - 單畫面，不要畫面 chip 列；最上面一列放 statusbar（tdp screen.1、tdp screen.4：要不要有 app 可以自行決定）
       - panel 怎麼拆 app 可以自行決定（tdp L1）：左邊 profile 清單、右邊那個 profile 的 domain
@@ -37,7 +37,7 @@ tasks:
   - id: 4
     spec: 1
     request: 命令列：`hostu` 啟動，`hostu version`（`-v`、`--version`）印出版本，`hostu help`（`-h`、`--help`）印出命令列的用法
-    tdp: [tdp E1, tdp project.4]
+    tdp: [tdp E1, tdp project.4, tdp E3]
   - id: 5
     spec: 4
     request: "`[1] PROFILES` 列出存著的 profile；一次一個生效，綠色的勾標出 hosts 檔現在是哪一個，勾有自己的欄位，NAME 對著名稱"
@@ -57,7 +57,7 @@ tasks:
   - id: 7
     spec: 1
     request: statusbar 寫 hosts 檔與生效中的 profile；hosts 檔跟生效中的 profile 對不上時（之後改了 profile，或別的程式寫過 hosts 檔），statusbar 會說
-    tdp: [tdp screen.4, tdp L2, tdp P5]
+    tdp: [tdp screen.4, tdp L2, tdp P5, tdp L3]
     remark:
       - 寫什麼是 app 的內容（tdp screen.4、tdp P5）；欄位寬度固定，生效中的 profile 放最後（tdp L2）
   - id: 8
@@ -71,7 +71,7 @@ tasks:
   - id: 9
     spec: 3
     request: 在 `[1] PROFILES` 按 `Enter` 啟用這個 profile：先問，寫出會寫幾個 domain，沒有 `localhost` 時警告；接受了才寫進 hosts 檔
-    tdp: [tdp K3, tdp F6, tdp confirm, tdp toast.2, tdp note.7, tdp T1, tdp note.6, tdp M5, tdp popup.1]
+    tdp: [tdp K3, tdp F6, tdp confirm, tdp toast.2, tdp note.7, tdp T1, tdp note.6, tdp M5, tdp popup.1, tdp F5, tdp toast.1]
     remark:
       - profile 上最直觀的事就是啟用（tdp K3）；要先問（tdp F6：哪些動作要 confirm app 可以自行決定）
       - 沒有 localhost 的那一句是警告，用 Peach（tdp confirm.2：哪一句算警告 app 可以自行決定）
@@ -87,7 +87,7 @@ tasks:
   - id: 11
     spec: 3
     request: 舊的 hosts 檔留著：hostu 第一次寫 hosts 檔之前，先把它原樣留一份（`~/.hostu/hosts.original`）
-    tdp: [tdp E3, tdp P5, tdp note.6, tdp note.7, tdp popup.1]
+    tdp: [tdp E3, tdp P5, tdp note.6, tdp note.7, tdp popup.1, tdp F5, tdp toast.1]
     remark:
       - app 替使用者記下的原值是資料，放資料目錄（tdp E3）
   - id: 12
@@ -113,7 +113,7 @@ tasks:
   - id: 15
     spec: 3
     request: 在 `[1] PROFILES` 按 `D` 刪掉這個 profile，先問；生效中的不能刪
-    tdp: [tdp P5, tdp M5, tdp K12, tdp F6, tdp confirm, tdp M6, tdp T1, tdp note.6, tdp note.7, tdp F4, tdp popup.1]
+    tdp: [tdp P5, tdp M5, tdp K12, tdp F6, tdp confirm, tdp M6, tdp T1, tdp note.6, tdp note.7, tdp F4, tdp popup.1, tdp F5, tdp toast.1]
     remark:
       - 生效中的 profile 上，刪除照停用畫（tdp M6：對象存在、但現在不能執行）
   - id: 16
@@ -144,7 +144,7 @@ tasks:
   - id: 20
     spec: 3
     request: 在 `[2] DOMAINS` 按 `D` 刪掉這個 domain，先問
-    tdp: [tdp P5, tdp M5, tdp K12, tdp F6, tdp confirm, tdp T1, tdp note.6, tdp note.7, tdp F4, tdp popup.1]
+    tdp: [tdp P5, tdp M5, tdp K12, tdp F6, tdp confirm, tdp T1, tdp note.6, tdp note.7, tdp F4, tdp popup.1, tdp F5, tdp toast.1]
   - id: 21
     spec: 1
     request: profile 存在 `~/.hostu/profiles.yaml`（`HOSTU__DATA` 改位置），是 hostu 自己的格式，每改一次就存一次；改 profile 只改這個檔
@@ -194,7 +194,7 @@ tasks:
   - id: 30
     spec: 2
     request: 安裝：Homebrew、Scoop（Windows）、安裝腳本（不用 sudo，裝到 `~/.local/bin`；Windows 在 PowerShell 裡）、`go install`。移除：Homebrew 或移除腳本，刪 profile 與舊 hosts 檔的副本之前先問；移除 hostu 不動 hosts 檔
-    tdp: [tdp E6, tdp project.2, tdp project.3, tdp project.7]
+    tdp: [tdp E6, tdp project.2, tdp project.3, tdp project.7, tdp project.5, tdp project.6]
     remark:
       - install.sh、uninstall.sh 照 tdp project.2 的範本（範本的 app's own 段落 app 自己改）；移除腳本問了才刪資料目錄是範本本來的做法
       - 出 Windows 版：install.ps1、uninstall.ps1 怎麼寫 app 可以自行決定（tdp project.3），Scoop bucket 照 tdp project.7

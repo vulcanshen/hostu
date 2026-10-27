@@ -196,7 +196,6 @@ hostu 遵循 [terminu design](https://github.com/vulcanshen/terminu)，用 [term
 | [locku](https://github.com/vulcanshen/locku) | 終端機的螢幕保護，帶 PIN 鎖 |
 | [kamonu](https://github.com/vulcanshen/kamonu) | 一個字一個字畫家族 mark（家紋）的終端機編輯器 |
 | [ccdrawu](https://github.com/vulcanshen/ccdrawu) | Claude Code 的側邊欄：用量、context、花費與 git 跟對話並排 |
-| [demou](https://github.com/vulcanshen/demou) | 家族的操作教學 app，邊按邊學 |
 
 ## License
 

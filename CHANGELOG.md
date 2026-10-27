@@ -2,7 +2,7 @@
 
 Each release names the version of terminu design (tdp) it follows.
 
-## Unreleased
+## v1.0.0 — tdp v1.0.0
 
 - Profiles of the hosts file: `[1] PROFILES` lists them, the active one ticked in green; `[2] DOMAINS` shows the domains
   of the one under the cursor, each going to one address or more.
@@ -23,3 +23,5 @@ Each release names the version of terminu design (tdp) it follows.
   `Enter` renames it to `.bak` and starts as the first time, `Esc` quits and prints what is wrong.
 - `!` opens the App Log: every message hostu showed, what you did and what hostu did by itself, while it has been
   open.
+- Works in a terminal 60 columns wide and 24 rows high, the two panels side by side; in a smaller one hostu shows its
+  name, the size it needs and how to quit (`Ctrl-C` twice).

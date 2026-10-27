@@ -12,7 +12,7 @@ tasks:
     spec: 2
     implementation: |
       最低尺寸 60×24（App.MinWidth、MinHeight）；比這小時 terminu-go 只畫三列「hostu」、「needs a terminal of at least 60×24」、「Press [Ctrl-C] twice to quit」，放不下時先拿掉尺寸那列、再拿掉離開那列，一列比畫面寬也算放不下；按鍵都不作用，只有連按兩次 Ctrl-C 離開；拉大回到原本的畫面，開著的 popup 還在
-      每個畫面與 hostu 開的每個 popup（含 toast、error popup、MOVE ASIDE、sudo 的 terminal popup、App Log），在 60×24、60×32、80×24、120×40、160×50、三種 icon／powerline 寬度（1/1、2/1、2/2）下，每一列都等於終端機寬
+      每個畫面與 hostu 開的每個 popup（含 toast、error popup、MOVE ASIDE、sudo 的 PASSWORD password popup、doas 的 terminal popup、App Log），在 60×24、60×32、80×24、120×40、160×50、三種 icon／powerline 寬度（1/1、2/1、2/2）下，每一列都等於終端機寬
       popup 開著時終端機縮小：popup 照打開時的大小，超出畫面的部分切掉（terminu-go 畫），縮到 60×5、1×1 也不當掉
       tdptest 的 Check 在 60×32 跑一輪，也查最低尺寸不高於 60×32
     test: [TestL1BelowTheLeastSize, TestL4EveryLineIsTheTerminalsWidth, TestE5PopupBiggerThanTheScreen]
@@ -238,7 +238,7 @@ tasks:
   - id: 30
     spec: 2
     implementation: |
-      install.sh、uninstall.sh、.goreleaser.yaml、.github/workflows/release.yml 照 tdp v0.11.5 的範本（v0.10.3 起範本沒變），只差範本允許的地方：install.sh 的 WINDOWS="yes" 與 app's own 段落多一句寫 hosts 檔要 sudo（或 doas）；uninstall.sh 的 app's own 段落寫 hosts 檔留在 hostu 最後寫的樣子；.goreleaser.yaml 打開 Windows 與 scoops（vulcanshen/scoop-bucket），description 與 caveats 寫 hostu 的；release.yml 的測試加 windows-latest
+      install.sh、uninstall.sh、.goreleaser.yaml、.github/workflows/release.yml 照 tdp v1.0.0 的範本（v0.10.3 起範本沒變），只差範本允許的地方：install.sh 的 WINDOWS="yes" 與 app's own 段落多一句寫 hosts 檔要 sudo（或 doas）；uninstall.sh 的 app's own 段落寫 hosts 檔留在 hostu 最後寫的樣子；.goreleaser.yaml 打開 Windows 與 scoops（vulcanshen/scoop-bucket），description 與 caveats 寫 hostu 的；release.yml 的測試加 windows-latest
       family.mk 照範本原樣複製（含 dev target），不改
       移除腳本照範本，設定與資料目錄（~/.hostu 裡有 profiles.yaml 與 hosts.original）各問一次才刪；不動 hosts 檔
       install.ps1 裝到 %LOCALAPPDATA%\hostu；uninstall.ps1 刪執行檔，設定與資料目錄各問一次（y/N）才刪，最後說 hosts 檔留在 hostu 最後寫的樣子

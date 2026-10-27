@@ -205,7 +205,6 @@ hostu follows [terminu design](https://github.com/vulcanshen/terminu) and is bui
 | [locku](https://github.com/vulcanshen/locku) | A screensaver with a PIN lock, for the terminal |
 | [kamonu](https://github.com/vulcanshen/kamonu) | A terminal editor for the family's marks (kamon), drawn letter by letter |
 | [ccdrawu](https://github.com/vulcanshen/ccdrawu) | A sidebar for Claude Code: usage, context, cost and git beside the transcript |
-| [demou](https://github.com/vulcanshen/demou) | The family's app for learning the operations, hands-on |
 
 ## License
 
