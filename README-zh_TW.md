@@ -185,17 +185,11 @@ Windows 上的 `~` 是 `%USERPROFILE%`。`config.yaml` 只有一個設定，term
 ## terminu 家族
 
 hostu 遵循 [terminu design](https://github.com/vulcanshen/terminu)，用 [terminu-go](https://github.com/vulcanshen/terminu-go)
-做的。家族的其他 app：
+做的。
 
-| App | 是什麼 |
-|---|---|
-| [kbu](https://github.com/vulcanshen/kbu) | Kubernetes 的 TUI 儀表板 |
-| [filu](https://github.com/vulcanshen/filu) | 不用學就會用的終端機檔案管理員 |
-| [sshu](https://github.com/vulcanshen/sshu) | ssh 與 sftp 的終端機介面 |
-| [webu](https://github.com/vulcanshen/webu) | 把網頁當文件讀的終端機瀏覽器 |
-| [locku](https://github.com/vulcanshen/locku) | 終端機的螢幕保護，帶 PIN 鎖 |
-| [kamonu](https://github.com/vulcanshen/kamonu) | 一個字一個字畫家族 mark（家紋）的終端機編輯器 |
-| [ccdrawu](https://github.com/vulcanshen/ccdrawu) | Claude Code 的側邊欄：用量、context、花費與 git 跟對話並排 |
+- [terminu design](https://github.com/vulcanshen/terminu)：家族 app 遵循的設計，家族的 app 也列在這裡
+- [terminu-go](https://github.com/vulcanshen/terminu-go)：家族 app 用的 Go 函式庫
+- [terminu-harness](https://github.com/vulcanshen/terminu-harness)：照 terminu design、用 terminu-go 做 app 的 Claude Code plugin
 
 ## License
 
