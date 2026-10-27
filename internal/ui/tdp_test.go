@@ -3,6 +3,7 @@ package ui
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	terminu "github.com/vulcanshen/terminu-go"
@@ -49,10 +50,15 @@ func TestTDP(t *testing.T) {
 // The same walk with values that have broken screens: every tricky one a
 // profile can be named is a profile's name, the active one the first, and
 // the hosts file's name has a Tab and a colour code (components, control
-// characters). A colour code in a name there is the data's, drawn by its
-// name as it must be (Tricky).
+// characters), but on Windows, where a file name can't have them. A colour
+// code in a name there is the data's, drawn by its name as it must be
+// (Tricky).
 func TestTDPWithTrickyValues(t *testing.T) {
-	hostsFile := func(home string) string { return filepath.Join(home, "ho\x1b[31mst\ts") }
+	name := "ho\x1b[31mst\ts"
+	if runtime.GOOS == "windows" {
+		name = "hosts"
+	}
+	hostsFile := func(home string) string { return filepath.Join(home, name) }
 	tdptest.Check(t, tdptest.App{Name: "hostu", New: newApp, Tricky: true,
 		Env: func(home string) map[string]string { return map[string]string{"HOSTU__HOSTS_FILE": hostsFile(home)} },
 		Seed: func(home string) {

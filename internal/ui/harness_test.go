@@ -3,6 +3,7 @@ package ui
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -101,10 +102,16 @@ func TestMain(m *testing.M) {
 
 // sandbox is an Env in a new temporary directory: the hosts file a system
 // has, and profiles.yaml when profiles is not "". The directory has a short
-// path, as /etc/hosts is: confirms and toasts that name it fit in a line.
+// path, as /etc/hosts is: confirms and toasts that name it fit in a line. On
+// Windows, which has no /tmp, it is at the root of the drive with the
+// temporary directory.
 func sandbox(t *testing.T, profiles string) Env {
 	t.Helper()
-	dir, err := os.MkdirTemp("/tmp", "hu")
+	tmp := "/tmp"
+	if runtime.GOOS == "windows" {
+		tmp = filepath.VolumeName(os.TempDir()) + `\`
+	}
+	dir, err := os.MkdirTemp(tmp, "hu")
 	if err != nil {
 		t.Fatal(err)
 	}
