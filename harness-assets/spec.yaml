@@ -1,6 +1,6 @@
-id: 6
-from: v1.0.0
-to: v1.1.0-beta.1
+id: 7
+from: v1.1.0-beta.1
+to: v1.1.0-beta.2
 tasks:
   - id: 1
     spec: 2
@@ -192,10 +192,11 @@ tasks:
     remark:
       - README 沒寫：splash 不揭露（tdp S2）。這個 task 是從測試 TestSplashIsDocsIcon 來的
   - id: 30
-    spec: 6
+    spec: 7
     request: 安裝：Homebrew、Scoop（Windows）、安裝腳本（不用 sudo，裝到 `~/.local/bin`；Windows 在 PowerShell 裡）、`go install`。移除：Homebrew 或移除腳本，刪 profile 與舊 hosts 檔的副本之前先問；移除 hostu 不動 hosts 檔
-    tdp: [tdp E6, tdp project.2, tdp project.3, tdp project.7, tdp project.5, tdp project.6, tdp project-37]
+    tdp: [tdp E6, tdp project.2, tdp project.3, tdp project.7, tdp project.5, tdp project.6, tdp project-37, tdp project-34, tdp project-38, tdp project-39]
     remark:
       - install.sh、uninstall.sh 照 tdp project.2 的範本（範本的 app's own 段落 app 自己改）；移除腳本問了才刪資料目錄是範本本來的做法
       - 出 Windows 版：install.ps1、uninstall.ps1 怎麼寫 app 可以自行決定（tdp project.3），Scoop bucket 照 tdp project.7
       - Claude Code 的檔案不進 git：.gitignore 照範本排除 CLAUDE.md 與 .claude/，git 只追蹤 harness 的 .claude/rules/terminu.md（tdp project.3、tdp project-37）
+      - beta（tag vX.Y.Z-beta.N）發成 GitHub pre-release，不推 Homebrew tap 與 scoop bucket，brew、scoop、install.sh 拿到的還是正式版；CHANGELOG 的標題是 beta 的 tag（tdp project.6、tdp project.7）。release notes 寫在 checkout 外面，執行檔不帶 +dirty（tdp project.7、tdp project-39）。2026-10-28 第一個 beta 是 v1.0.1-beta.1：畫面與操作沒變，所以升 patch（user 定的，terminu 轉達）
