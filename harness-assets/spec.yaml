@@ -1,11 +1,11 @@
-id: 8
-from: v1.1.0-beta.2
-to: v1.1.0-beta.3
+id: 9
+from: v1.1.0-beta.3
+to: v1.1.0
 tasks:
   - id: 1
     spec: 2
     request: 一個畫面：最上面一列 statusbar，下面兩個 panel，`[1] PROFILES` 是存著的 profile，`[2] DOMAINS` 是一個 profile 的 domain
-    tdp: [tdp screen.1, tdp screen.2, tdp panel.1, tdp panel.4, tdp L1, tdp components.4, tdp components.5, tdp panel.13, tdp L4, tdp screen.4, tdp screen.5]
+    tdp: [tdp screen.1, tdp screen.2, tdp panel.1, tdp panel.4, tdp L1, tdp components.4, tdp components.5, tdp panel.13, tdp L4, tdp screen.4, tdp screen.5, tdp E5]
     remark:
       - 單畫面，不要畫面 chip 列；最上面一列放 statusbar（tdp screen.1、tdp screen.4：要不要有 app 可以自行決定）
       - panel 怎麼拆 app 可以自行決定（tdp L1）：左邊 profile 清單、右邊那個 profile 的 domain
@@ -101,13 +101,13 @@ tasks:
   - id: 13
     spec: 3
     request: 在 `[1] PROFILES` 按 `r` 改這個 profile 的名字
-    tdp: [tdp P5, tdp M5, tdp K12, tdp input.2, tdp input.5, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9, tdp popup.1]
+    tdp: [tdp P5, tdp M5, tdp K12, tdp input.2, tdp input.5, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9, tdp popup.1, tdp input.1]
     remark:
       - 名字合不合規則是功能邏輯（tdp P5），不合時寫在 input popup 的錯誤列（tdp popup.7）；存檔失敗開 error popup，input popup 留著（tdp note.6）
   - id: 14
     spec: 3
     request: 在 `[1] PROFILES` 按 `c` 把這個 profile 複製成一個新的 profile
-    tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp input.2, tdp input.6, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9, tdp popup.1]
+    tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp input.2, tdp input.6, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9, tdp popup.1, tdp input.1]
     remark:
       - 新增之後 cursor 移到新的那一項（tdp K3）
   - id: 15
@@ -119,26 +119,26 @@ tasks:
   - id: 16
     spec: 3
     request: 在 `[1] PROFILES` 按 `n` 新增一個空的 profile
-    tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp input.2, tdp input.6, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9, tdp popup.1]
+    tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp input.2, tdp input.6, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9, tdp popup.1, tdp input.1]
     remark:
       - 新增之後 cursor 移到新的那一項（tdp K3）
   - id: 17
     spec: 3
     request: 在 `[1] PROFILES` 按 `i` 把 hosts 檔現在的內容讀成一個新的 profile
-    tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp toast.2, tdp input.2, tdp input.6, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9, tdp popup.1]
+    tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp toast.2, tdp input.2, tdp input.6, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9, tdp popup.1, tdp input.1]
     remark:
       - 有跳過的行時用 Warning toast 說跳過了幾行（tdp toast.2）；新增之後 cursor 移到新的那一項（tdp K3）
   - id: 18
     spec: 3
     request: 在 `[2] DOMAINS` 按 `n` 新增 domain：NEW DOMAIN 表單，一個 domain 一筆；Addresses 可以一次打好幾個位址，用空白隔開（`10.1.2.3 fd00::3`）；名稱與位址打錯當場就擋下來
-    tdp: [tdp form, tdp input.2, tdp text, tdp popup.7, tdp P5, tdp M5, tdp K12, tdp K3, tdp note.7, tdp input.8, tdp input.9, tdp T1, tdp note.6, tdp popup.1, tdp input.10, tdp M6]
+    tdp: [tdp form, tdp input.2, tdp text, tdp popup.7, tdp P5, tdp M5, tdp K12, tdp K3, tdp note.7, tdp input.8, tdp input.9, tdp T1, tdp note.6, tdp popup.1, tdp input.10, tdp M6, tdp input.1]
     remark:
       - 名稱與位址合不合規則是功能邏輯（tdp P5），擋在那一欄的 input popup（tdp form.16、tdp popup.7）
       - 兩欄 Domain、Addresses，按鈕寫 Add（tdp form.7：按鈕上寫按下去要做的事）
   - id: 19
     spec: 3
     request: 在 `[2] DOMAINS` 按 `Enter` 編輯這個 domain 與它的位址
-    tdp: [tdp K3, tdp form, tdp input.2, tdp input.5, tdp text, tdp popup.7, tdp note.7, tdp M5, tdp input.8, tdp input.9, tdp P5, tdp T1, tdp F4, tdp note.6]
+    tdp: [tdp K3, tdp form, tdp input.2, tdp input.5, tdp text, tdp popup.7, tdp note.7, tdp M5, tdp input.8, tdp input.9, tdp P5, tdp T1, tdp F4, tdp note.6, tdp input.1]
     remark:
       - domain 上最直觀的事是編輯（tdp K3）；表單的標題帶它的名字（tdp form.3）
   - id: 20
@@ -184,7 +184,7 @@ tasks:
   - id: 28
     spec: 1
     request: 按 `q` 離開
-    tdp: [tdp K9, tdp M4]
+    tdp: [tdp K9, tdp M4, tdp M5]
   - id: 29
     spec: 1
     request: 家族的 splash：在 panel 上按 `V` 打開，畫 hostu 的家族 mark（`docs/icon.svg`）
@@ -192,7 +192,7 @@ tasks:
     remark:
       - README 沒寫：splash 不揭露（tdp S2）。這個 task 是從測試 TestSplashIsDocsIcon 來的
   - id: 30
-    spec: 8
+    spec: 9
     request: 安裝：Homebrew、Scoop（Windows）、安裝腳本（不用 sudo，裝到 `~/.local/bin`；Windows 在 PowerShell 裡）、`go install`。移除：Homebrew 或移除腳本，刪 profile 與舊 hosts 檔的副本之前先問；移除 hostu 不動 hosts 檔
     tdp: [tdp E6, tdp project.2, tdp project.3, tdp project.7, tdp project.5, tdp project.6, tdp project-37, tdp project-34, tdp project-38, tdp project-39, tdp project-13, tdp project.4]
     remark:

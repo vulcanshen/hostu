@@ -2,6 +2,22 @@
 
 Each release names the version of terminu design (tdp) it follows.
 
+## v1.0.1 — tdp v1.1.0
+
+Everything since v1.0.0, the betas v1.0.1-beta.1 and beta.2 included:
+
+- On terminu-go v1.1.0 (tdp v1.1.0); hostu looks and works as in v1.0.0.
+- A release may have betas first: a tag like `v1.0.1-beta.1` is a GitHub pre-release; Homebrew, Scoop and
+  `install.sh` keep the stable release, and `go install github.com/vulcanshen/hostu/cmd/hostu@<the beta's tag>`
+  installs the beta.
+- The binaries' build information names the tag alone, no longer `+dirty`.
+- The release build sets the version through go.mod's module path, as every app of the family now does; `hostu
+  version` prints the tag as before.
+- The repository no longer keeps Claude Code's files: `.gitignore` leaves out `CLAUDE.md` and `.claude/`, all but
+  harness's `.claude/rules/terminu.md`.
+- The README's terminu family section links terminu design, terminu-go and terminu-harness, and no longer lists the
+  other apps.
+
 ## v1.0.1-beta.2 — tdp v1.1.0-beta.3
 
 - On terminu-go v1.1.0-beta.3 (tdp v1.1.0-beta.3); hostu looks and works as in v1.0.0.
