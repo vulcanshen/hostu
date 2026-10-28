@@ -2,6 +2,12 @@
 
 Each release names the version of terminu design (tdp) it follows.
 
+## v1.0.1-beta.2 — tdp v1.1.0-beta.3
+
+- On terminu-go v1.1.0-beta.3 (tdp v1.1.0-beta.3); hostu looks and works as in v1.0.0.
+- The release build sets the version through go.mod's module path, as every app of the family now does; `hostu
+  version` prints the tag as before.
+
 ## v1.0.1-beta.1 — tdp v1.1.0-beta.2
 
 - On terminu-go v1.1.0-beta.2 (tdp v1.1.0-beta.2); hostu looks and works as in v1.0.0.

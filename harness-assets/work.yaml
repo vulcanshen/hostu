@@ -236,16 +236,17 @@ tasks:
       V：terminu-go 的 splash，畫程式裡那份家族 mark；測試守住它跟 docs/icon.svg 一樣（測試名稱）
     test: [TestSplashIsDocsIcon]
   - id: 30
-    spec: 7
+    spec: 8
     implementation: |
-      install.sh、uninstall.sh、.goreleaser.yaml、.github/workflows/release.yml 照 tdp v1.1.0-beta.2 的範本，只差範本允許的地方：install.sh 的 WINDOWS="yes" 與 app's own 段落多一句寫 hosts 檔要 sudo（或 doas）；uninstall.sh 的 app's own 段落寫 hosts 檔留在 hostu 最後寫的樣子；.goreleaser.yaml 打開 Windows 與 scoops（vulcanshen/scoop-bucket），description 與 caveats 寫 hostu 的；release.yml 的測試加 windows-latest
+      install.sh、uninstall.sh、.goreleaser.yaml、.github/workflows/release.yml 照 tdp v1.1.0-beta.3 的範本，只差範本允許的地方：install.sh 的 WINDOWS="yes" 與 app's own 段落多一句寫 hosts 檔要 sudo（或 doas）；uninstall.sh 的 app's own 段落寫 hosts 檔留在 hostu 最後寫的樣子；.goreleaser.yaml 打開 Windows 與 scoops（vulcanshen/scoop-bucket），description 與 caveats 寫 hostu 的；release.yml 的測試加 windows-latest
       .goreleaser.yaml 的 release.prerelease: auto，brews 與 scoops 都是 skip_upload: auto：tag 帶 -beta.N 時發成 GitHub pre-release，不寫 tap 與 bucket
+      .goreleaser.yaml 的 ldflags 用 {{ .ModulePath }}/internal/version.Version 注入版本，module 路徑取 go.mod 的 github.com/vulcanshen/hostu（v1，不帶 /vN）；tdptest 的 Check 在最新的 release 是 v2 以上而 module 沒帶 /vN 時失敗（project-13）
       release.yml 把 CHANGELOG 那一段寫到 $RUNNER_TEMP/RELEASE_NOTES.md，goreleaser 不帶 --skip=validate，再用同一個檔蓋過 release 的內文
       family.mk 照範本原樣複製（含 dev target），不改
       移除腳本照範本，設定與資料目錄（~/.hostu 裡有 profiles.yaml 與 hosts.original）各問一次才刪；不動 hosts 檔
       install.ps1 裝到 %LOCALAPPDATA%\hostu；uninstall.ps1 刪執行檔，設定與資料目錄各問一次（y/N）才刪，最後說 hosts 檔留在 hostu 最後寫的樣子
       tdptest 的 Check 在子測試 repo 拿 terminu-go 帶的 tdp 範本比對這些檔、project.3 的檔、Makefile 與 CHANGELOG，只容許範本允許改的地方
-      .gitignore 照 tdp v1.1.0-beta.2 的範本，沒有 hostu 自己加的行；git 只追蹤 .claude/rules/terminu.md，CLAUDE.md 與 .claude/ 其他的檔留在本機；tdptest 的 Check 在 git 追蹤了別的 Claude Code 檔案時失敗（project-37）
+      .gitignore 照 tdp v1.1.0-beta.3 的範本，沒有 hostu 自己加的行；git 只追蹤 .claude/rules/terminu.md，CLAUDE.md 與 .claude/ 其他的檔留在本機；tdptest 的 Check 在 git 追蹤了別的 Claude Code 檔案時失敗（project-37）
     test:
       - TestTDP
       - commit: 8c5b006
