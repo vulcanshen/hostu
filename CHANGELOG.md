@@ -2,6 +2,11 @@
 
 Each release names the version of terminu design (tdp) it follows.
 
+## Unreleased
+
+- On terminu-go v1.1.0-beta.1 (tdp v1.1.0-beta.1). The repository no longer keeps Claude Code's files: `.gitignore`
+  leaves out `CLAUDE.md` and `.claude/`, all but harness's `.claude/rules/terminu.md`.
+
 ## v1.0.0 — tdp v1.0.0
 
 - Profiles of the hosts file: `[1] PROFILES` lists them, the active one ticked in green; `[2] DOMAINS` shows the domains

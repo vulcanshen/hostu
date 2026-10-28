@@ -1,6 +1,6 @@
-id: 5
-from: v0.11.5
-to: v1.0.0
+id: 6
+from: v1.0.0
+to: v1.1.0-beta.1
 tasks:
   - id: 1
     spec: 2
@@ -192,9 +192,10 @@ tasks:
     remark:
       - README 沒寫：splash 不揭露（tdp S2）。這個 task 是從測試 TestSplashIsDocsIcon 來的
   - id: 30
-    spec: 2
+    spec: 6
     request: 安裝：Homebrew、Scoop（Windows）、安裝腳本（不用 sudo，裝到 `~/.local/bin`；Windows 在 PowerShell 裡）、`go install`。移除：Homebrew 或移除腳本，刪 profile 與舊 hosts 檔的副本之前先問；移除 hostu 不動 hosts 檔
-    tdp: [tdp E6, tdp project.2, tdp project.3, tdp project.7, tdp project.5, tdp project.6]
+    tdp: [tdp E6, tdp project.2, tdp project.3, tdp project.7, tdp project.5, tdp project.6, tdp project-37]
     remark:
       - install.sh、uninstall.sh 照 tdp project.2 的範本（範本的 app's own 段落 app 自己改）；移除腳本問了才刪資料目錄是範本本來的做法
       - 出 Windows 版：install.ps1、uninstall.ps1 怎麼寫 app 可以自行決定（tdp project.3），Scoop bucket 照 tdp project.7
+      - Claude Code 的檔案不進 git：.gitignore 照範本排除 CLAUDE.md 與 .claude/，git 只追蹤 harness 的 .claude/rules/terminu.md（tdp project.3、tdp project-37）
