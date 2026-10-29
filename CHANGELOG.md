@@ -2,7 +2,7 @@
 
 Each release names the version of terminu design (tdp) it follows.
 
-## Unreleased
+## v1.0.2 — tdp v1.1.0
 
 - A new family mark in `docs/icon.svg` and the splash (`V`): a gold H fills the frame, an O with a T in it above its
   bar and an S below, and the family's U frame is hostu's u.
