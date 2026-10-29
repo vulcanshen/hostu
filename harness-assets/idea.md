@@ -31,3 +31,4 @@
 - 2026-10-27，看到生效的勾畫在名稱那一格裡：「左邊 side bar 對其很有問題，應該要有預留一個 checked 的欄位，這樣才會對其」
 - 2026-10-27，寫 hosts 檔要 sudo 密碼時開了撐滿畫面的終端機：「跳 sudo password 的視窗也太大了吧... 有需要嗎?」「這沒辦法套用 PIN
   的 popup 表示方式嗎?」；選了「改用 password popup 收密碼」
+- 2026-10-29，自己用 kamonu 畫了新的 mark：「幫我換掉 hotsu 的 icon, 我已經用 kamonu 做好了」

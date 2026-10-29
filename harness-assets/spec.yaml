@@ -1,4 +1,4 @@
-id: 9
+id: 10
 from: v1.1.0-beta.3
 to: v1.1.0
 tasks:
@@ -186,11 +186,12 @@ tasks:
     request: 按 `q` 離開
     tdp: [tdp K9, tdp M4, tdp M5]
   - id: 29
-    spec: 1
+    spec: 10
     request: 家族的 splash：在 panel 上按 `V` 打開，畫 hostu 的家族 mark（`docs/icon.svg`）
     tdp: [tdp S1, tdp S2, tdp S3, tdp S4, tdp S5, tdp E6, tdp E8]
     remark:
       - README 沒寫：splash 不揭露（tdp S2）。這個 task 是從測試 TestSplashIsDocsIcon 來的
+      - mark 是使用者 2026-10-29 用 kamonu 畫的：金色的 H 撐滿框裡，上半格是 O、O 裡一個 T，下半格是 S；hostu 的 u 就是家族的 U 框，跟 kbu 的 K、B，locku 的 L、O、C、K 一樣（tdp S5）。註解的順序 U、H、O、S、T 就是揭露的順序
   - id: 30
     spec: 9
     request: 安裝：Homebrew、Scoop（Windows）、安裝腳本（不用 sudo，裝到 `~/.local/bin`；Windows 在 PowerShell 裡）、`go install`。移除：Homebrew 或移除腳本，刪 profile 與舊 hosts 檔的副本之前先問；移除 hostu 不動 hosts 檔

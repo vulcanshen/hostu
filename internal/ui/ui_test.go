@@ -242,7 +242,8 @@ func TestSameEveryStart(t *testing.T) {
 }
 
 // TestSplashIsDocsIcon is tdp E6: the splash draws docs/icon.svg, hostu's
-// mark as tdp S5 has it, the U frame and then H, O, S, T, U.
+// mark as tdp S5 has it, the U frame and then H, O, S, T: the frame is
+// hostu's u.
 func TestSplashIsDocsIcon(t *testing.T) {
 	t.Parallel()
 	want, err := os.ReadFile("../../docs/icon.svg")
@@ -258,8 +259,8 @@ func TestSplashIsDocsIcon(t *testing.T) {
 			comments = append(comments, strings.TrimSuffix(c, " -->"))
 		}
 	}
-	if !slices.Equal(comments, []string{"U", "H", "O", "S", "T", "U"}) {
-		t.Fatalf("the letters are %q, want U H O S T U", comments)
+	if !slices.Equal(comments, []string{"U", "H", "O", "S", "T"}) {
+		t.Fatalf("the letters are %q, want U H O S T", comments)
 	}
 	s := splash()
 	var lines []string

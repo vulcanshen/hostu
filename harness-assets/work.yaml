@@ -231,9 +231,10 @@ tasks:
       global operation popup 的離開那一列說明寫「leave hostu」
     test: [TestQuit]
   - id: 29
-    spec: 1
+    spec: 10
     implementation: |
-      V：terminu-go 的 splash，畫程式裡那份家族 mark；測試守住它跟 docs/icon.svg 一樣（測試名稱）
+      V：terminu-go 的 splash，畫程式裡那份家族 mark；測試守住它跟 docs/icon.svg 一樣，註解依序是 U、H、O、S、T，splash 畫得完、寫出名稱、版本、介紹與提示
+      docs/icon.svg 是 kamonu 匯出的 ~/.kamonu/data/svg/hostu.svg 原樣複製，internal/ui/icon.svg 是它的副本（go:embed）；viewBox 250 × 250、一格一個 10 × 10 的 rect、格子在 x 10–230、y 30–210，<!-- U --> 的 rect 跟 tdp 的 principle/icon.svg 一樣，接著 <!-- H -->、<!-- O -->、<!-- S -->、<!-- T --> 都是 #f2b753
     test: [TestSplashIsDocsIcon]
   - id: 30
     spec: 9
