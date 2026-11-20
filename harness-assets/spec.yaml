@@ -43,18 +43,18 @@ tasks:
       - "`update` 每個 app 都一樣，由 terminu-go 的 SelfUpdate 做（tdp E1、E8）：Homebrew 的 tap 是 vulcanshen/tap（tdp E6），從原始碼編的說請在那邊 `git pull && make install`"
       - "`iconwidth` 是有的 app 才有（tdp E1）：hostu 不提供"
   - id: 5
-    spec: 4
+    spec: 11
     request: "`[1] PROFILES` 列出存著的 profile；一次一個生效，綠色的勾標出 hosts 檔現在是哪一個，勾有自己的欄位，NAME 對著名稱"
-    tdp: [tdp panel.5, tdp panel.7, tdp L2, tdp panel.15, tdp screen.8, tdp P5, tdp M2, tdp panel.1, tdp M5, tdp E3]
+    tdp: [tdp panel.5, tdp panel.7, tdp L2, tdp panel.15, tdp screen.8, tdp P5, tdp M2, tdp panel.1, tdp M5, tdp E3, tdp K13]
     remark:
       - 生效中的那一個是旗標，畫在標記欄（tdp panel.7：不能標記的清單可以把一種旗標畫在標記欄，glyph 與顏色 app 可以自行決定）：Green 的 nf-md-check_circle
       - "[1] 不能標記（沒有整批操作），標記欄只放這個旗標；每一列都留標記欄，沒生效的列空白，換生效的 profile 時名稱不位移（tdp panel.7、L2）。表頭的標記欄也空著，NAME 對著名稱（tdp panel.5）。使用者 2026-10-27 看到勾畫在名稱那一格裡、NAME 對不到名稱，說要預留勾的欄位"
       - 兩欄：NAME、DOMAINS。NAME 可以截短，DOMAINS 是數字靠右、寬度不變，放不下時先收（tdp panel.5）
       - 用 terminu-go 的 List.Flags 與 Row.Flag，不用 Marks：Marks 是整批標記（tdp panel.7 的 checkbox 勾），意思不同
   - id: 6
-    spec: 1
+    spec: 11
     request: "`[2] DOMAINS` 是一個 profile 的 domain，每個 domain 一筆；一個 domain 可以指到好幾個位址（IPv4 與 IPv6）"
-    tdp: [tdp panel.13, tdp panel.5, tdp screen.8, tdp components.4, tdp M2, tdp M6, tdp panel.1, tdp M5]
+    tdp: [tdp panel.13, tdp panel.5, tdp screen.8, tdp components.4, tdp M2, tdp M6, tdp panel.1, tdp M5, tdp K13]
     remark:
       - "跟著 [1] 的 cursor 換成那個 profile 的 domain（tdp panel.13），label 帶 profile 的名字 `[2] DOMAINS: office`（tdp components.4）"
       - 兩欄：DOMAIN、ADDRESSES，一個 domain 的好幾個位址寫在同一格（tdp P5：內容怎麼排是領域的事）
@@ -80,9 +80,9 @@ tasks:
       - profile 上最直觀的事就是啟用（tdp K3）；要先問（tdp F6：哪些動作要 confirm app 可以自行決定）
       - 沒有 localhost 的那一句是警告，用 Peach（tdp confirm.2：哪一句算警告 app 可以自行決定）
   - id: 10
-    spec: 4
+    spec: 11
     request: 用自己的帳號跑 hostu；hosts 檔要管理員才寫得了時，用一個小框（password popup）問 sudo 的密碼，只交給 sudo（doas 在 hostu 裡的終端機自己問，Windows 是系統的 UAC 視窗）。macOS、Linux 用 `sudo` 或 `doas`，Windows 用 `gsudo` 或 Windows 11 的 `sudo`
-    tdp: [tdp terminal.7, tdp terminal.4, tdp E8, tdp K10, tdp F1, tdp note.6, tdp components.5, tdp note.7, tdp F5, tdp popup.1, tdp password, tdp input.2, tdp toast.1, tdp P5]
+    tdp: [tdp terminal.7, tdp terminal.4, tdp E8, tdp K10, tdp F1, tdp note.6, tdp components.5, tdp note.7, tdp F5, tdp popup.1, tdp password, tdp input.2, tdp toast.1, tdp P5, tdp M5]
     remark:
       - 照 tdp terminal.7：先試不用密碼的（sudo -n）；要密碼時開 PASSWORD 的 password popup，密碼只交給 sudo 的標準輸入。這些由 terminu-go 的 App.Elevate 做，hostu 只給要跑的指令，拿不到密碼（tdp E8）
       - doas 不能從標準輸入讀密碼：開 terminal popup 讓它自己問，沒有歷史與選取模式（tdp terminal.7、terminal.4）。用哪個工具依平台 app 可以自行決定（tdp terminal.7）：sudo，沒有時 doas；Windows 用 gsudo 或 Windows 11 的 sudo，系統跳 UAC
@@ -234,7 +234,7 @@ tasks:
   - id: 33
     spec: 11
     request: "`profiles.yaml` 的 `active` 指到不在的 profile 時（手改過），檔案不動、值留著：這一次沒有生效中的 profile，跳 Warning；statusbar 照原本寫的顯示，`active:` 畫成紅色；那個 profile 回來就又生效，啟用別的 profile 才改掉它"
-    tdp: [tdp E3, tdp screen.4, tdp toast.2, tdp note.7, tdp L2, tdp color.2]
+    tdp: [tdp E3, tdp screen.4, tdp toast.2, tdp note.7, tdp L2, tdp color.2, tdp components.5]
     remark:
       - "`active` 指的是使用者自己資料裡的一筆：不算值不合規則，不備份、不重寫（tdp E3「指到不在的一筆」）；內建的預設是沒有生效中的 profile"
       - statusbar 沒有 label 與值分開的 panel：`active:` 這幾個字就是它的 label，畫 Red；值照原本寫的，外面來的字由 terminu-go 畫（tdp components.5）

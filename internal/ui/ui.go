@@ -164,7 +164,7 @@ func (h *hostu) load() {
 	}
 	if s.ActiveGone() {
 		h.notices = append(h.notices, terminu.Notice{Kind: terminu.Warning,
-			Text: fmt.Sprintf("Active profile %q is not in %s: no profile is active", s.Active, profile.File)})
+			Text: fmt.Sprintf("Active profile \"%s\" is not in %s: no profile is active", s.Active, profile.File)})
 	}
 }
 

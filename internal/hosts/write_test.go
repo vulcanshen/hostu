@@ -101,7 +101,7 @@ func TestWriteWindows(t *testing.T) {
 		t.Fatalf("ran %v", *runs)
 	}
 	stand(t, "windows", nil, nil)
-	if _, err := Write(path, "x\n"); err == nil || !strings.Contains(err.Error(), "Install gsudo") {
+	if _, err := Write(path, "x\n"); err == nil || !strings.Contains(err.Error(), "Install gsudo (`scoop install gsudo`)") {
 		t.Fatalf("%v", err)
 	}
 }

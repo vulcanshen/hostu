@@ -98,7 +98,7 @@ func Failed(tool string, lines []string, err error) *ToolError {
 func windowsCopy(tmp, path string) error {
 	tool := onPath("gsudo", "sudo")
 	if tool == "" {
-		return fmt.Errorf("No permission to write %s. Install gsudo (scoop install gsudo), or open the terminal as the administrator.", path)
+		return fmt.Errorf("No permission to write %s. Install gsudo (`scoop install gsudo`), or open the terminal as the administrator.", path)
 	}
 	quote := func(s string) string { return "'" + strings.ReplaceAll(s, "'", "''") + "'" }
 	if out, err := output(tool, "powershell", "-NoProfile", "-Command",

@@ -69,17 +69,17 @@ func (s *Store) fit() (out []string) {
 	for i, p := range s.Profiles {
 		switch {
 		case p.Name == "" || CheckName(p.Name) != nil:
-			out = append(out, fmt.Sprintf("profile %d (name %q)", i+1, p.Name))
+			out = append(out, fmt.Sprintf("profile %d (name \"%s\")", i+1, p.Name))
 			continue
 		case slices.ContainsFunc(kept, func(k *Profile) bool { return strings.EqualFold(k.Name, p.Name) }):
-			out = append(out, fmt.Sprintf("profile %d (name %q again)", i+1, p.Name))
+			out = append(out, fmt.Sprintf("profile %d (name \"%s\" again)", i+1, p.Name))
 			continue
 		}
 		var domains []hosts.Domain
 		for _, d := range p.Domains {
 			switch {
 			case hosts.CheckDomain(d.Name) != nil:
-				out = append(out, fmt.Sprintf("domain %q in the profile %s", d.Name, p.Name))
+				out = append(out, fmt.Sprintf("domain \"%s\" in the profile %s", d.Name, p.Name))
 				continue
 			case hosts.Has(domains, d.Name):
 				out = append(out, fmt.Sprintf("domain %s in the profile %s again", d.Name, p.Name))
@@ -88,7 +88,7 @@ func (s *Store) fit() (out []string) {
 			var addrs []string
 			for _, a := range d.Addresses {
 				if hosts.CheckAddress(a) != nil {
-					out = append(out, fmt.Sprintf("address %q of %s in the profile %s", a, d.Name, p.Name))
+					out = append(out, fmt.Sprintf("address \"%s\" of %s in the profile %s", a, d.Name, p.Name))
 					continue
 				}
 				addrs = append(addrs, a)

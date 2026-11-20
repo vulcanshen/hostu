@@ -75,11 +75,11 @@ func TestLoadTakesOutWhatDoesNotFit(t *testing.T) {
 		out  []string
 		kept string
 	}{
-		"profiles:\n  - name: \"a\\x1b[31m\"\n  - name: b\n": {[]string{`profile 1 (name "a\x1b[31m")`}, "b"},
+		"profiles:\n  - name: \"a\\x1b[31m\"\n  - name: b\n": {[]string{"profile 1 (name \"a\x1b[31m\")"}, "b"},
 		"profiles:\n  - name: \" a\"\n  - name: \"\"\n":      {[]string{`profile 1 (name " a")`, `profile 2 (name "")`}, ""},
 		"profiles:\n  - name: a\n  - name: A\n":              {[]string{`profile 2 (name "A" again)`}, "a"},
 		"profiles:\n  - name: a\n    domains:\n      - domain: \"x\\x1b[31m\"\n        addresses: [10.0.0.1]\n": {
-			[]string{`domain "x\x1b[31m" in the profile a`}, "a:"},
+			[]string{"domain \"x\x1b[31m\" in the profile a"}, "a:"},
 		"profiles:\n  - name: a\n    domains:\n      - domain: x\n        addresses: [10.0.0, 10.0.0.1]\n": {
 			[]string{`address "10.0.0" of x in the profile a`}, "a:x=10.0.0.1"},
 		"profiles:\n  - name: a\n    domains:\n      - domain: x\n        addresses: [10.0.0]\n": {

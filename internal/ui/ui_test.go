@@ -890,10 +890,11 @@ func TestDeleteFromTheMenuClosesIt(t *testing.T) {
 }
 
 // misfit is a profiles.yaml read whole with entries that don't fit: a name
-// with a control character and an address that is not one.
+// with a control character (not a colour code, which the App Log, content to
+// read, would colour: tdp components.5) and an address that is not one.
 const misfit = `active: office
 profiles:
-  - name: "lab\x1b[31m"
+  - name: "lab\x07"
   - name: office
     domains:
       - domain: git.corp.local
@@ -930,7 +931,7 @@ func TestMisfitsKeptAside(t *testing.T) {
 	hs.contains(`1 value in config.yaml did not fit: defaults used, yours kept in config.yaml.bak`,
 		`config.yaml: input_tab_width "0" did not fit; using "4"`,
 		`2 entries in profiles.yaml did not fit: taken out, yours kept in profiles.yaml.bak`,
-		`profiles.yaml: profile 1 (name "lab\x1b[31m") did not fit; taken out`,
+		`profiles.yaml: profile 1 (name "lab\x07") did not fit; taken out`,
 		`profiles.yaml: address "10.0.0" of git.corp.local in the profile office did not fit; taken out`,
 		"Not read: refesh in "+cfg+"; delete it if you don't need it")
 }
@@ -949,12 +950,12 @@ func TestMisfitCopyCantBeMade(t *testing.T) {
 		t.Skip("running as root: every directory is writable")
 	}
 	hs := start(t, env, 160, 40)
-	if hs.saved() != misfit || hs.h.store.Get("office") == nil || hs.h.store.Get("lab\x1b[31m") != nil {
+	if hs.saved() != misfit || hs.h.store.Get("office") == nil || hs.h.store.Get("lab\x07") != nil {
 		t.Fatalf("profiles.yaml is now %q", hs.saved())
 	}
 	hs.keys("Esc", "!")
 	hs.contains("profiles.yaml.bak could not be made:", "profiles.yaml left as it was",
-		`profiles.yaml: profile 1 (name "lab\x1b[31m") did not fit; taken out`)
+		`profiles.yaml: profile 1 (name "lab\x07") did not fit; taken out`)
 	hs.lacks("yours kept")
 }
 
@@ -979,4 +980,13 @@ func TestActiveProfileGone(t *testing.T) {
 	if hs.h.store.Active != "default" || hs.h.store.ActiveGone() {
 		t.Fatalf("active is %q", hs.h.store.Active)
 	}
+}
+
+// The active profile is given to the toast and the statusbar as written: a
+// control character in it is drawn by its name, as in any name (tdp
+// components.5).
+func TestActiveProfileGoneDrawnByName(t *testing.T) {
+	t.Parallel()
+	hs := start(t, sandbox(t, strings.Replace(officeAndHome, "active: default", "active: \"w\\a\"", 1)), 120, 40)
+	hs.contains(`Active profile "w\x07" is not in profiles.yaml: no profile is active`, `active: w\x07`)
 }

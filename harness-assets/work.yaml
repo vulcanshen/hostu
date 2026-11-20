@@ -33,24 +33,24 @@ tasks:
       Run 回錯（MOVE ASIDE 的 Esc、找不到家目錄）：stderr 寫「hostu: <錯誤>」，exit 1
     test: [TestVersionAndHelp, TestUnknownCommand, TestUpdateFromSource]
   - id: 5
-    spec: 4
+    spec: 11
     implementation: |
       [1] PROFILES 是 terminu-go 的清單（List.Flags），標記欄之後兩欄：NAME（可以截短，最少 12 格）、DOMAINS（domain 的數目，數字靠右，放不下時第一個收；icon 佔一格時 [1] 要 26 欄、畫面 78 欄以上才放得下）
       標記欄：生效中的那一列的旗標（Row.Flag）是 Green 的 nf-md-check_circle，其他列與表頭空白，寬度是 icon 的寬度加一格（terminu-go 畫）；NAME 的表頭與每一列的名稱同一欄，icon 佔一格或兩格都一樣
       順序是 profiles.yaml 裡的順序；新增、複製、匯入的加在最後。每次啟動同一份 profiles.yaml 畫出來一樣
       cursor 移動時 [2] 跟著換（task 6）
-      空的時候（profiles.yaml 有、但一個 profile 都沒有）：「No profiles yet」、「Press [n] to make one, [i] to read the hosts file into one, or [Space] to see what you can do here」；item operation 沒有對象，Space menu 沒有那一區，hint 只剩 n:new（terminu-go 照 Action 的 Scope 拿掉）
+      空的時候（profiles.yaml 有、但一個 profile 都沒有）：「No profiles yet」、「Press [n] to make one, [I] to read the hosts file into one, or [Space] to see what you can do here」；item operation 沒有對象，Space menu 沒有那一區，hint 只剩 n:new（terminu-go 照 Action 的 Scope 拿掉）
       profiles.yaml 讀不了時不畫清單，先問 MOVE ASIDE（task 26）
-      Space menu 的 item operation：[Enter] Activate、[p]review、[r]ename、[c]opy、[D]elete；panel operation：[n]ew、[i]mport（各 task）
+      Space menu 的 item operation：[Enter] Activate、[p]review、[r]ename、[c]opy、[x] Delete；panel operation：[n]ew、[I]mport（各 task；刪除在 x、i 留給附註，tdp K13）
     test: [TestLongNameIsCut, TestNameStandsOverTheNames, TestSameEveryStart, TestEmptyListsHint]
   - id: 6
-    spec: 1
+    spec: 11
     implementation: |
       [2] DOMAINS: <profile>：terminu-go 的清單，DOMAIN、ADDRESSES 兩欄，都可以截短，放不下時先收 ADDRESSES；一個 domain 的位址用「, 」接在同一格（127.0.0.1, ::1）
       [1] 的 cursor 一移動就換成那個 profile 的 domain，label 跟著換；順序是 profile 裡的順序，新加的在最後
       profile 沒有 domain：「No domains in <profile>」、「Press [n] to add one, or [Space] to see what you can do here」；Space menu 沒有 item operation 那一區，hint 只剩 n:new
       沒有 profile 可以顯示：「No profile to show」、「Press [1] to go to the profiles」；這時 [n]ew 也不在，下框不寫 hint
-      Space menu 的 item operation：[Enter] Edit、[D]elete；panel operation：[n]ew（task 18–20）
+      Space menu 的 item operation：[Enter] Edit、[x] Delete；panel operation：[n]ew（task 18–20；刪除在 x，tdp K13）
     test: [TestFirstStartMakesDefault, TestNewProfile, TestNewDomain, TestEmptyListsHint]
   - id: 7
     spec: 1
@@ -80,7 +80,7 @@ tasks:
       Esc：什麼都不寫；已經生效的 profile 也可以再啟用一次（重寫 hosts 檔）
     test: [TestActivateWritesTheHostsFile, TestActivateEscWritesNothing, TestActivateWarnsWithoutLocalhost]
   - id: 10
-    spec: 4
+    spec: 11
     implementation: |
       hostu 用自己的帳號跑；寫 hosts 檔時先自己寫，可以就好
       沒有權限（permission denied）時，內容寫進暫存檔，以管理員身分複製過去：
@@ -92,7 +92,7 @@ tasks:
       - 在密碼框按 Esc：複製不跑，暫存檔刪掉，hosts 檔與生效中的 profile 不變，App Log 不記
       密碼 hostu 拿不到：不寫進檔案、不進 App Log、不出現在畫面上
       都沒有：error popup「WRITE FAILED: <路徑>」「No permission to write <路徑>, and neither sudo nor doas is there to write it as the administrator.」
-      Windows：用 gsudo，沒有就 Windows 11 的 sudo，跑 powershell 的 Copy-Item，系統跳 UAC；都沒有「No permission to write <路徑>. Install gsudo (scoop install gsudo), or open the terminal as the administrator.」
+      Windows：用 gsudo，沒有就 Windows 11 的 sudo，跑 powershell 的 Copy-Item，系統跳 UAC；都沒有「No permission to write <路徑>. Install gsudo (`scoop install gsudo`), or open the terminal as the administrator.」，要使用者執行的指令用反引號包起來（tdp M5）
       Windows 的複製失敗：error popup「WRITE FAILED: <路徑>」只寫說原因的那一行「Could not write it with <工具>: <輸出的第一個非空行>」（沒有輸出時寫結束的錯誤）；輸出好幾行時，全文接成一列記進 App Log：Info「Output of <工具>: <全部的行>」
       其他寫入錯誤直接開 error popup；暫存檔用完刪掉
     test: [TestWriteItself, TestWriteHandsTheCopyBack, TestWriteNoSudo, TestWriteWindows, TestWriteWindowsFails, TestWriteFailsSaysWhy, TestSudoAsksForThePassword, TestSudoEscWritesNothing, TestSudoCopyFails, TestDoasAsksInATerminal]
@@ -274,8 +274,8 @@ tasks:
     spec: 11
     implementation: |
       profile.Load 不檢查 active；Store.ActiveGone 是 active 有寫、卻沒有那個名字的 profile
-      啟動時 notice 是 Warning「Active profile "<active>" is not in profiles.yaml: no profile is active」（名字用 %q 寫，控制字元寫成跳脫的樣子）
+      啟動時 notice 是 Warning「Active profile "<active>" is not in profiles.yaml: no profile is active」（名字照原本寫的交給 terminu-go：toast 與 statusbar 是名字與短字，控制字元由它畫成紅色的名字，tdp components.5；App Log 是拿來讀的內容，顏色碼照著上色）
       store.Active 照原本寫的留著，之後存 profiles.yaml 也照寫；沒有 profile 有勾，生效中的不能刪那一條管不到任何 profile，statusbar 的狀態空白
       statusbar：「active: 」這幾個字 Red，值照原本寫的、Lavender
       啟用別的 profile 時 active 換成它；建一個同名的 profile，它就是生效中的
-    test: [TestActiveGone, TestActiveProfileGone]
+    test: [TestActiveGone, TestActiveProfileGone, TestActiveProfileGoneDrawnByName]
