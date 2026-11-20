@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"testing"
 )
@@ -57,7 +58,8 @@ func TestFix(t *testing.T) {
 	if string(b) != "# mine\nrefesh: 3\ninput_tab_width: 4\n" {
 		t.Fatalf("%q", b)
 	}
-	if info, _ := os.Stat(filepath.Join(dir, File)); info.Mode().Perm() != 0o600 {
+	// Its mode stays, where a file has one: Windows has no such bits.
+	if info, _ := os.Stat(filepath.Join(dir, File)); runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		t.Fatalf("mode %v", info.Mode())
 	}
 	if c, m, n, err := Load(dir); err != nil || c != Default || m != nil || len(n) != 1 {
