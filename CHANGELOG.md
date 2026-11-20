@@ -4,7 +4,8 @@ Each release names the version of terminu design (tdp) it follows.
 
 ## Unreleased
 
-- On terminu-go v1.2.22-beta.2 (tdp v1.2.20).
+- On terminu-go v1.2.22-beta.3 (tdp v1.2.20). Toasts stack, at most three, `Esc` closing the oldest first; what the
+  start has to say about hostu's files comes a toast each.
 - Delete is on `x` in both panels, no longer `D`, and Import on `I`, no longer `i`: every terminu app deletes with `x`,
   `D` being the Diff mode's key and `i` opening an item's note.
 - `hostu update` brings hostu to its latest release the way it was installed: Homebrew upgrades it, an install by the
