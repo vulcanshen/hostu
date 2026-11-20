@@ -1,6 +1,6 @@
-id: 11
-from: v1.1.0
-to: v1.2.20
+id: 12
+from: v1.2.20
+to: v1.3.0
 tasks:
   - id: 1
     spec: 2
@@ -189,10 +189,11 @@ tasks:
       - 讀不了是 YAML 本身壞了、或結構不對（例：profiles 不是清單）；讀得進來、只是值或某一筆不合規則的不算，照 task 31（tdp E3）
       - hostu 沒有不開畫面就讀這兩個檔的指令，也沒有 TUI 以外的畫面：tdp E3 的「沒有畫面時」與「TUI 以外」管不到
   - id: 27
-    spec: 3
+    spec: 12
     request: 按 `!` 打開 App Log：這次打開以來 hostu 做了什麼、哪裡出了問題
-    tdp: [tdp note.7, tdp P3, tdp F5, tdp K1, tdp screen.2, tdp toast.2, tdp K3, tdp panel.13]
+    tdp: [tdp note.7, tdp P3, tdp F5, tdp K1, tdp screen.2, tdp toast.2, tdp K3, tdp panel.13, tdp components.5, tdp note-108]
     remark:
+      - 每一筆照名字與短字畫：名稱裡的控制字元，連顏色碼的 ESC，都畫成紅色的名字、不上色，跟同一句話的 toast 一樣（tdp note.7、note-108；hostu 2026-11-20 回報的，tdp v1.3.0 照著改了）；由 terminu-go 畫，hostu 照原樣交出名稱
       - 記的動作照 tdp note.7：tdp P3 的 operation，只看不改的也記（`p` 預覽）；在 confirm、表單、input popup 按 `Esc` 取消的沒做，不記；移動 cursor、換 focus（換到 [2] 這個明細也是，tdp K3）、Space menu、`?`、`!` 不記
   - id: 28
     spec: 1
@@ -232,9 +233,9 @@ tasks:
     remark:
       - hostu 從來只讀 input_tab_width，分不出哪個 key 是以前讀過的，一律寫 `Not read`（tdp E3）
   - id: 33
-    spec: 11
+    spec: 12
     request: "`profiles.yaml` 的 `active` 指到不在的 profile 時（手改過），檔案不動、值留著：這一次沒有生效中的 profile，跳 Warning；statusbar 照原本寫的顯示，`active:` 畫成紅色；那個 profile 回來就又生效，啟用別的 profile 才改掉它"
-    tdp: [tdp E3, tdp screen.4, tdp toast.2, tdp note.7, tdp L2, tdp color.2, tdp components.5]
+    tdp: [tdp E3, tdp screen.4, tdp toast.2, tdp note.7, tdp L2, tdp color.2, tdp components.5, tdp note-108]
     remark:
       - "`active` 指的是使用者自己資料裡的一筆：不算值不合規則，不備份、不重寫（tdp E3「指到不在的一筆」）；內建的預設是沒有生效中的 profile"
       - statusbar 沒有 label 與值分開的 panel：`active:` 這幾個字就是它的 label，畫 Red；值照原本寫的，外面來的字由 terminu-go 畫（tdp components.5）

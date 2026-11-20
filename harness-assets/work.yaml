@@ -217,15 +217,15 @@ tasks:
       Esc：離開 hostu；Run 回傳「<路徑> can't be read: <原因>」，main 印成「hostu: <路徑> can't be read: <原因>」到 stderr，exit 1；在這之前什麼都不寫（讀不了的檔、hosts 檔都不動）
     test: [TestBrokenProfilesEscQuits, TestBrokenProfilesMovedAside, TestBrokenConfigThenProfiles, TestBrokenConfigAtTheFirstStart, TestLoadBroken]
   - id: 27
-    spec: 3
+    spec: 12
     implementation: |
-      !：terminu-go 的 App Log（e0dd1cd）
+      !：terminu-go 的 App Log（e0dd1cd）；每一筆由它照名字與短字畫，名稱裡的控制字元畫成紅色的名字，顏色碼的 ESC 也是、不上色（terminu-go v1.3.0）
       記：使用者對 profile 與 domain 做的事、hosts 檔原樣留了一份，toast 與 error popup 照記（e0dd1cd）
       只看不改的也記：p 預覽記「Previewed the profile <profile>」（task 12）
       確定了才記：Submit、input 的 commit、confirm 確定後的那一步才叫 App.Log；在 confirm、表單、input popup 按 Esc 取消的，terminu-go 不跑它們，什麼都不記
       不記：移動 cursor、換 focus（Tab、2 換到 [2] 這個明細也是；[1] 的 Enter 是啟用，不是進明細）、Space menu、?、!（terminu-go 不當成動作）
       每一筆開頭大寫，名稱照原樣（184ac4b）
-    test: [TestAppLog, TestAppLogLeavesOutCancelled]
+    test: [TestAppLog, TestAppLogLeavesOutCancelled, TestMisfitsKeptAside]
   - id: 28
     spec: 1
     implementation: |
@@ -271,10 +271,10 @@ tasks:
       config.Fix 重寫時這些 key 照原樣留著
     test: [TestLoadMisfitsAndKeysNotRead, TestFix, TestMisfitsKeptAside]
   - id: 33
-    spec: 11
+    spec: 12
     implementation: |
       profile.Load 不檢查 active；Store.ActiveGone 是 active 有寫、卻沒有那個名字的 profile
-      啟動時 notice 是 Warning「Active profile "<active>" is not in profiles.yaml: no profile is active」（名字照原本寫的交給 terminu-go：toast 與 statusbar 是名字與短字，控制字元由它畫成紅色的名字，tdp components.5；App Log 是拿來讀的內容，顏色碼照著上色）
+      啟動時 notice 是 Warning「Active profile "<active>" is not in profiles.yaml: no profile is active」（名字照原本寫的交給 terminu-go：toast、statusbar 與 App Log 都由它把控制字元畫成紅色的名字，顏色碼也不上色，tdp components.5、note-108）
       store.Active 照原本寫的留著，之後存 profiles.yaml 也照寫；沒有 profile 有勾，生效中的不能刪那一條管不到任何 profile，statusbar 的狀態空白
       statusbar：「active: 」這幾個字 Red，值照原本寫的、Lavender
       啟用別的 profile 時 active 換成它；建一個同名的 profile，它就是生效中的
