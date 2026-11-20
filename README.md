@@ -79,12 +79,6 @@ No sudo: it installs to `~/.local/bin`. On Windows, in PowerShell:
 irm https://raw.githubusercontent.com/vulcanshen/hostu/main/install.ps1 | iex
 ```
 
-### Go
-
-```sh
-go install github.com/vulcanshen/hostu/cmd/hostu@latest
-```
-
 ### The first start
 
 hostu reads the hosts file into a profile named `default`, marks it active (the hosts file has it) and saves it in
@@ -92,7 +86,15 @@ hostu reads the hosts file into a profile named `default`, marks it active (the 
 
 ### Update and uninstall
 
-To update, install again the same way. To uninstall:
+To update to the latest release, the way hostu was installed:
+
+```sh
+hostu update
+```
+
+Installed with Homebrew, it runs `brew upgrade vulcanshen/tap/hostu`; with the script or a download from the releases,
+it puts the new release in place of the old; with Scoop, it prints the `scoop update hostu` to run. It never asks for
+sudo: where it can't write, it says what to do. To uninstall:
 
 ```sh
 brew uninstall hostu
@@ -149,11 +151,11 @@ hostu's own:
 | `Enter` | `[1] PROFILES` | Activate the profile: write it to the hosts file, after asking |
 | `p` | `[1] PROFILES` | Preview the hosts file the profile writes |
 | `r`, `c` | `[1] PROFILES` | Rename the profile; copy it to a new one |
-| `D` | `[1] PROFILES` | Delete the profile, after asking (not the active one) |
+| `x` | `[1] PROFILES` | Delete the profile, after asking (not the active one) |
 | `n` | `[1] PROFILES` | A new, empty profile |
-| `i` | `[1] PROFILES` | Read the hosts file as it is now into a new profile |
+| `I` | `[1] PROFILES` | Read the hosts file as it is now into a new profile |
 | `Enter` | `[2] DOMAINS` | Edit the domain and its addresses |
-| `D` | `[2] DOMAINS` | Delete the domain, after asking |
+| `x` | `[2] DOMAINS` | Delete the domain, after asking |
 | `n` | `[2] DOMAINS` | A new domain: the NEW DOMAIN form |
 
 In the form, type several addresses in Addresses between spaces: `10.1.2.3 fd00::3`.
@@ -178,6 +180,12 @@ hosts file, point `HOSTU__HOSTS_FILE` at a copy of it.
 
 When `config.yaml` or `profiles.yaml` can't be read (say, after a change by hand), hostu asks before anything else:
 `Enter` renames it to `.bak` and starts as the first time, `Esc` quits and prints the file and what is wrong with it.
+
+When it can be read but has something hostu can't use (an `input_tab_width` below 1, a profile name with a control
+character or taken twice, an address that is not one), hostu keeps a copy as `.bak`, writes the file again with the
+default in its place or without it, and says so; the App Log (`!`) lists each one. A key in `config.yaml` that hostu
+doesn't read stays in it, and the App Log says so at every start. An `active` profile that is not in `profiles.yaml` is
+left as written: none is active until it is back or you activate another, and the statusbar shows its label in red.
 
 ## Limits
 

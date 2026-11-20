@@ -37,14 +37,14 @@ var states = []struct {
 	{"copy", []string{"c"}},
 	{"new profile", []string{"n"}},
 	{"new profile, a name taken", []string{"n", "home", "Enter"}},
-	{"import", []string{"i"}},
-	{"delete profile confirm", []string{"j", "D"}},
+	{"import", []string{"I"}},
+	{"delete profile confirm", []string{"j", "x"}},
 	{"new domain form", []string{"Tab", "n"}},
 	{"edit form", []string{"Tab", "Enter"}},
 	{"domain text popup over the form", []string{"Tab", "n", "Enter"}},
 	{"addresses, one wrong", []string{"Tab", "n", "j", "Enter", "10.0.0.1 10.0", "Enter"}},
 	{"form errors", []string{"Tab", "n", "Tab", "Enter"}},
-	{"delete domain confirm", []string{"Tab", "D"}},
+	{"delete domain confirm", []string{"Tab", "x"}},
 	{"splash", []string{"V"}},
 }
 
@@ -65,7 +65,7 @@ var ownPopups = []struct {
 		env := sandbox(t, officeAndHome)
 		os.WriteFile(env.Hosts, []byte(systemHosts+"not an address\n"), 0o644)
 		return env
-	}, func(hs *harness) { hs.keys("i", "Enter") }},
+	}, func(hs *harness) { hs.keys("I", "Enter") }},
 	{"an error popup", func(t *testing.T) Env {
 		env := sandbox(t, officeAndHome)
 		os.Remove(env.Hosts)
@@ -355,7 +355,7 @@ func TestStatusSaysTheHostsFileDiffers(t *testing.T) {
 	t.Parallel()
 	hs := newHarness(t, 80, 40)
 	hs.contains("(in sync)")
-	hs.keys("Tab", "j", "D", "Enter") // broadcasthost out of default
+	hs.keys("Tab", "j", "x", "Enter") // broadcasthost out of default
 	hs.contains("(differs)     active: default")
 	if hs.hostsFile() != systemHosts {
 		t.Fatal("a change to the profile wrote the hosts file")
@@ -411,7 +411,7 @@ func TestImportTheHostsFile(t *testing.T) {
 	t.Parallel()
 	hs := newHarness(t, 80, 40)
 	os.WriteFile(hs.env.Hosts, []byte(systemHosts+"10.9.9.9 build.corp\nnot an address\n"), 0o644)
-	hs.keys("i", "Enter")
+	hs.keys("I", "Enter")
 	hs.contains("WARNING", "Imported 3 domains from "+hs.env.Hosts+", skipped 1 line")
 	p := hs.h.store.Get("imported")
 	if p == nil || len(p.Domains) != 3 || p.Domains[2].Name != "build.corp" {
@@ -426,9 +426,9 @@ func TestImportTheHostsFile(t *testing.T) {
 func TestDeleteProfile(t *testing.T) {
 	t.Parallel()
 	hs := newHarness(t, 80, 40)
-	hs.keys("D")
+	hs.keys("x")
 	hs.lacks("DELETE")
-	hs.keys("j", "D")
+	hs.keys("j", "x")
 	hs.contains("DELETE: office", "Its one domain goes with it.", "Delete the profile office?")
 	hs.keys("Enter")
 	if hs.h.store.Get("office") != nil || strings.Contains(hs.saved(), "office") {
@@ -476,7 +476,7 @@ func TestEditDomain(t *testing.T) {
 func TestDeleteDomain(t *testing.T) {
 	t.Parallel()
 	hs := newHarness(t, 80, 40)
-	hs.keys("G", "Tab", "j", "D")
+	hs.keys("G", "Tab", "j", "x")
 	hs.contains("DELETE: nas.home", "Delete nas.home from home?")
 	hs.keys("Enter")
 	if home := hs.h.store.Get("home"); len(home.Domains) != 1 {
@@ -492,14 +492,14 @@ func TestPreview(t *testing.T) {
 }
 
 // broken are profiles.yaml files hostu can't read and why MOVE ASIDE says:
-// not YAML, YAML of the wrong shape, YAML that check finds wrong. yaml's own
-// "yaml: " is left out, its errors are on one line, and a value of the wrong
-// kind is said in the user's words, not Go's.
+// not YAML, YAML of the wrong shape. yaml's own "yaml: " is left out, its
+// errors are on one line, and a value of the wrong kind is said in the
+// user's words, not Go's. One read whole with entries that don't fit is not
+// one of them (TestMisfitsKeptAside).
 var broken = map[string]string{
 	"profiles: [\n":              "line 1: did not find expected node content",
 	"profiles: 3\n":              "line 1: 3 is not a list",
 	"active: [a]\nprofiles: 3\n": "line 1: a list is not text; line 2: 3 is not a list",
-	"active: office\nprofiles:\n  - name: office\n    domains:\n      - domain: x\n        addresses: [10.0.0]\n": `the profile office has "10.0.0" for x, which is not an IPv4 or IPv6 address`,
 }
 
 // A profiles.yaml hostu can't read is asked about before anything else
@@ -554,14 +554,14 @@ func TestBrokenConfigThenProfiles(t *testing.T) {
 	env := sandbox(t, "profiles: [\n")
 	os.MkdirAll(env.Config, 0o755)
 	cfg := filepath.Join(env.Config, "config.yaml")
-	os.WriteFile(cfg, []byte("input_tab_width: 0\n"), 0o644)
+	os.WriteFile(cfg, []byte("input_tab_width: [\n"), 0o644)
 	hs := start(t, env, 120, 40)
-	hs.contains(cfg+" can't be read:", "the setting input_tab_width is 0: it is at least 1", "Move it to config.yaml.bak")
+	hs.contains(cfg+" can't be read:", "line 1: did not find expected node content", "Move it to config.yaml.bak")
 	hs.keys("Enter")
 	if _, err := os.Stat(cfg); err == nil || hs.h.a.InputTabWidth != 4 {
 		t.Fatalf("config.yaml is there (%v) or input_tab_width is %d", err, hs.h.a.InputTabWidth)
 	}
-	if b, _ := os.ReadFile(cfg + ".bak"); string(b) != "input_tab_width: 0\n" {
+	if b, _ := os.ReadFile(cfg + ".bak"); string(b) != "input_tab_width: [\n" {
 		t.Fatalf("config.yaml.bak is %q", b)
 	}
 	hs.contains(filepath.Join(env.Data, "profiles.yaml")+" can't be read:", "Move it to profiles.yaml.bak")
@@ -579,7 +579,7 @@ func TestBrokenConfigAtTheFirstStart(t *testing.T) {
 	t.Parallel()
 	env := sandbox(t, "")
 	os.MkdirAll(env.Config, 0o755)
-	os.WriteFile(filepath.Join(env.Config, "config.yaml"), []byte("input_tab_width: 0\n"), 0o644)
+	os.WriteFile(filepath.Join(env.Config, "config.yaml"), []byte("input_tab_width: [\n"), 0o644)
 	hs := start(t, env, 120, 40)
 	hs.contains("MOVE ASIDE")
 	hs.lacks("Made the profile default")
@@ -610,7 +610,7 @@ func TestAppLog(t *testing.T) {
 	hs := newHarness(t, 120, 40)
 	hs.keys("n", "lab", "Enter", "r", "Backspace", "Backspace", "Backspace", "work", "Enter", "c", "Enter")
 	hs.keys("Tab", "n", "Enter", "nas.lan", "Enter", "j", "Enter", "10.0.0.9", "Enter", "Tab", "Enter")
-	hs.keys("Enter", "Tab", "Enter", "D", "Enter")
+	hs.keys("Enter", "Tab", "Enter", "x", "Enter")
 	hs.keys("1", "gg", "p", "Esc", "Enter", "Enter", "!")
 	hs.contains("Made the profile lab", "Renamed the profile lab to work", "Copied the profile work to work copy",
 		"Added nas.lan to the profile work copy", "Saved nas.lan in the profile work copy",
@@ -623,7 +623,7 @@ func TestAppLog(t *testing.T) {
 func TestAppLogLeavesOutCancelled(t *testing.T) {
 	t.Parallel()
 	hs := newHarness(t, 120, 40)
-	hs.keys("G", "D", "Esc", "r", "Esc", "Tab", "n", "Esc", "D", "Esc", "1", "Enter", "Esc", "!")
+	hs.keys("G", "x", "Esc", "r", "Esc", "Tab", "n", "Esc", "x", "Esc", "1", "Enter", "Esc", "!")
 	hs.lacks("Deleted", "Renamed", "Added", "Wrote")
 }
 
@@ -879,12 +879,104 @@ func TestEmptyListsHint(t *testing.T) {
 func TestDeleteFromTheMenuClosesIt(t *testing.T) {
 	t.Parallel()
 	hs := newHarness(t, 80, 40)
-	hs.keys("j", "Space", "D")
+	hs.keys("j", "Space", "x")
 	hs.contains("DELETE: office")
 	hs.keys("Enter")
 	hs.lacks("ITEM OPERATION", "DELETE")
-	hs.keys("G", "Tab", "j", "Space", "D")
+	hs.keys("G", "Tab", "j", "Space", "x")
 	hs.contains("DELETE: nas.home")
 	hs.keys("Enter")
 	hs.lacks("ITEM OPERATION", "DELETE")
+}
+
+// misfit is a profiles.yaml read whole with entries that don't fit: a name
+// with a control character and an address that is not one.
+const misfit = `active: office
+profiles:
+  - name: "lab\x1b[31m"
+  - name: office
+    domains:
+      - domain: git.corp.local
+        addresses: [10.1.2.3, 10.0.0]
+`
+
+// Files read whole with values or entries that don't fit are not ones hostu
+// can't read: each is kept aside as .bak and written again without them, a
+// Warning saying so and a WARN each in the App Log; a key hostu doesn't read
+// stays, told in an INFO entry (tdp E3).
+func TestMisfitsKeptAside(t *testing.T) {
+	t.Parallel()
+	env := sandbox(t, misfit)
+	os.MkdirAll(env.Config, 0o755)
+	cfg := filepath.Join(env.Config, "config.yaml")
+	os.WriteFile(cfg, []byte("refesh: 3\ninput_tab_width: 0\n"), 0o644)
+	hs := start(t, env, 160, 40)
+	hs.lacks("MOVE ASIDE")
+	if b, _ := os.ReadFile(cfg + ".bak"); string(b) != "refesh: 3\ninput_tab_width: 0\n" {
+		t.Fatalf("config.yaml.bak is %q", b)
+	}
+	if b, _ := os.ReadFile(cfg); string(b) != "refesh: 3\ninput_tab_width: 4\n" || hs.h.a.InputTabWidth != 4 {
+		t.Fatalf("config.yaml is %q, input_tab_width %d", b, hs.h.a.InputTabWidth)
+	}
+	data := filepath.Join(env.Data, "profiles.yaml")
+	if b, _ := os.ReadFile(data + ".bak"); string(b) != misfit {
+		t.Fatalf("profiles.yaml.bak is %q", b)
+	}
+	if strings.Contains(hs.saved(), "lab") || strings.Contains(hs.saved(), "10.0.0]") || !strings.Contains(hs.saved(), "active: office") {
+		t.Fatalf("profiles.yaml is\n%s", hs.saved())
+	}
+	hs.contains("did not fit", "active: office")
+	hs.keys("Esc", "!")
+	hs.contains(`1 value in config.yaml did not fit: defaults used, yours kept in config.yaml.bak`,
+		`config.yaml: input_tab_width "0" did not fit; using "4"`,
+		`2 entries in profiles.yaml did not fit: taken out, yours kept in profiles.yaml.bak`,
+		`profiles.yaml: profile 1 (name "lab\x1b[31m") did not fit; taken out`,
+		`profiles.yaml: address "10.0.0" of git.corp.local in the profile office did not fit; taken out`,
+		"Not read: refesh in "+cfg+"; delete it if you don't need it")
+}
+
+// When the copy can't be made the file is left as it was, what fits used
+// for this run only, an Error saying so (tdp E3).
+func TestMisfitCopyCantBeMade(t *testing.T) {
+	t.Parallel()
+	env := sandbox(t, misfit)
+	if err := os.Chmod(env.Data, 0o555); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chmod(env.Data, 0o755)
+	if f, err := os.CreateTemp(env.Data, "w"); err == nil {
+		f.Close()
+		t.Skip("running as root: every directory is writable")
+	}
+	hs := start(t, env, 160, 40)
+	if hs.saved() != misfit || hs.h.store.Get("office") == nil || hs.h.store.Get("lab\x1b[31m") != nil {
+		t.Fatalf("profiles.yaml is now %q", hs.saved())
+	}
+	hs.keys("Esc", "!")
+	hs.contains("profiles.yaml.bak could not be made:", "profiles.yaml left as it was",
+		`profiles.yaml: profile 1 (name "lab\x1b[31m") did not fit; taken out`)
+	hs.lacks("yours kept")
+}
+
+// An active profile that is not there is kept as written: the file is left
+// as it is, none is active for now, a Warning says so, and the statusbar
+// shows it with its label Red; activating another changes it (tdp E3).
+func TestActiveProfileGone(t *testing.T) {
+	t.Parallel()
+	text := strings.Replace(officeAndHome, "active: default", "active: work", 1)
+	hs := start(t, sandbox(t, text), 120, 40)
+	hs.contains("active: work")
+	if hs.saved() != text {
+		t.Fatalf("profiles.yaml is now %q", hs.saved())
+	}
+	spans := hs.h.status(120)
+	if l := spans[len(spans)-2]; l.Text != "active: " || l.Style != terminu.Fg(terminu.Red) {
+		t.Fatalf("the label is %+v", l)
+	}
+	hs.keys("Esc", "!")
+	hs.contains(`Active profile "work" is not in profiles.yaml: no profile is active`)
+	hs.keys("Esc", "Enter", "Enter")
+	if hs.h.store.Active != "default" || hs.h.store.ActiveGone() {
+		t.Fatalf("active is %q", hs.h.store.Active)
+	}
 }

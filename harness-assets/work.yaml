@@ -24,13 +24,14 @@ tasks:
     test:
       - commit: 8c5b006
   - id: 4
-    spec: 1
+    spec: 11
     implementation: |
-      cmd/hostu：沒有參數就啟動；version、-v、--version 印 version.Display()（發版是 v<版號>，本機 build 是 dev）；help、-h、--help 印命令列的用法（指令三行，加上 profiles.yaml 在哪、HOSTU__DATA 與 HOSTU__HOSTS_FILE）
-      其他參數：stderr 寫「hostu: unknown command "<參數>"」與用法，exit 2
+      cmd/hostu：沒有參數就啟動；有參數時 command(args, stdout, stderr) 回 exit status，main 交給 os.Exit
+      version、-v、--version 把 version.Display() 印到 stdout（發版是 v<版號>，本機 build 是 dev）；help、-h、--help 把命令列的用法印到 stdout（start、update、version、help 四行，加上 profiles.yaml 在哪、HOSTU__DATA 與 HOSTU__HOSTS_FILE）；exit 0
+      update：terminu.SelfUpdate{App: hostu, Version: version.Version, Owner: vulcanshen, Tap: vulcanshen/tap, Source: git pull && make install}.Run(stdout, stderr) 的 exit status；本機 build（dev）在 stderr 說請在原始碼那邊更新，exit 1，不連網路
+      其他參數：stderr 寫「hostu: Unknown command "<參數>"」、空一行、用法，exit 2
       Run 回錯（MOVE ASIDE 的 Esc、找不到家目錄）：stderr 寫「hostu: <錯誤>」，exit 1
-    test:
-      - commit: 8c5b006
+    test: [TestVersionAndHelp, TestUnknownCommand, TestUpdateFromSource]
   - id: 5
     spec: 4
     implementation: |
@@ -125,9 +126,9 @@ tasks:
       通過：加一個新的 profile，domain 與位址照抄一份（不共用），加在最後、存 profiles.yaml，cursor 移到它上面；App Log 記「Copied the profile <原本> to <新>」
     test: [TestCopyProfile]
   - id: 15
-    spec: 3
+    spec: 11
     implementation: |
-      [1] 的 D（Space menu「[D]elete — take it away, with its domains」，item operation）：生效中的 profile 上停用（Space menu 那一列停用色，按 D 不作用）
+      [1] 的 x（Space menu「[x] Delete — take it away, with its domains」，item operation）：生效中的 profile 上停用（Space menu 那一列停用色，按 x 不作用）
       其他 profile：開 confirm「DELETE: <profile>」，內容「It has no domains.」／「Its one domain goes with it.」／「Its <N> domains go with it.」，問句「Delete the profile <profile>?」，hint Enter:delete Esc:cancel
       Enter：拿掉、存 profiles.yaml；App Log 記「Deleted the profile <profile>」。存失敗：放回原位，error popup「CAN'T SAVE: <profiles.yaml 路徑>」與原因
       Esc：不動
@@ -141,9 +142,9 @@ tasks:
       通過：加一個沒有 domain 的 profile，加在最後、存 profiles.yaml，cursor 移到它上面，[2] 是它的空狀態；App Log 記「Made the profile <名字>」
     test: [TestNewProfile, TestNameSpacesAndControlCharacters, TestSaveFailsKeepsTheInput]
   - id: 17
-    spec: 3
+    spec: 11
     implementation: |
-      [1] 的 i（Space menu「[i]mport — the hosts file as it is now, as a new profile」，panel operation）：開 text input「IMPORT: <hosts 檔路徑>」（glyph nf-md-import），說明列「Name of the profile made from it」，建議值「imported」（有了就「imported 2」、3…），hint 的動詞 import
+      [1] 的 I（Space menu「[I]mport — the hosts file as it is now, as a new profile」，panel operation）；[1] 沒有 profile 時的空狀態寫「Press [n] to make one, [I] to read the hosts file into one, …」：開 text input「IMPORT: <hosts 檔路徑>」（glyph nf-md-import），說明列「Name of the profile made from it」，建議值「imported」（有了就「imported 2」、3…），hint 的動詞 import
       名字的檢查與存失敗照 task 13
       通過：這時再讀一次 hosts 檔（讀不了：error popup 蓋在 input popup 上），照 task 24 讀成 domain，加成新的 profile、在最後、存 profiles.yaml，cursor 移到它上面
       toast：Success「Imported <N> domain(s) from <hosts 檔路徑>」；有跳過的行時 Warning「…, skipped <N> line(s)」；App Log 照記
@@ -166,19 +167,19 @@ tasks:
       通過：換掉那一筆、存 profiles.yaml，cursor 留在它上面；App Log 記「Saved <domain> in the profile <profile>」；從 Space menu 打開的，表單關掉後回到 Space menu。存失敗：不改，error popup 蓋在表單上
     test: [TestEditDomain]
   - id: 20
-    spec: 3
+    spec: 11
     implementation: |
-      [2] 的 D（Space menu「[D]elete — take the domain out of the profile」，item operation）：開 confirm「DELETE: <domain>」，問句「Delete <domain> from <profile>?」，hint Enter:delete Esc:cancel
+      [2] 的 x（Space menu「[x] Delete — take the domain out of the profile」，item operation）：開 confirm「DELETE: <domain>」，問句「Delete <domain> from <profile>?」，hint Enter:delete Esc:cancel
       Enter：拿掉、存 profiles.yaml；App Log 記「Deleted <domain> from the profile <profile>」；hosts 檔不動（生效中的 profile 改了，statusbar 變成 (differs)）。存失敗：放回原位，error popup「CAN'T SAVE: <profiles.yaml 路徑>」與原因
       Esc：不動
       從 Space menu 執行的：照 task 15，Enter 刪掉之後 menu 跟著關，Esc 回到 menu
     test: [TestDeleteDomain, TestStatusSaysTheHostsFileDiffers, TestDeleteFromTheMenuClosesIt]
   - id: 21
-    spec: 1
+    spec: 11
     implementation: |
-      profiles.yaml 在 ~/.hostu（HOSTU__DATA 改位置），每改一次就寫一次（README、e0dd1cd）
-      讀進來時檢查：名字裡沒有控制字元、名字不重複、domain 與位址是 hosts 檔收的（9080664）
-    test: [TestSaveAndLoad, TestLoadChecksWhatIsInIt, TestTakenAndRemove]
+      profiles.yaml 在 ~/.hostu（HOSTU__DATA 改位置），每改一次就寫一次：先寫到旁邊的暫存檔再換過去，寫到一半斷掉時舊的還完整（README、e0dd1cd）
+      讀進來時把 hostu 自己不會寫出的那一筆拿掉（task 31）；active 照檔案寫的留著（task 33）
+    test: [TestSaveAndLoad, TestLoadTakesOutWhatDoesNotFit, TestTakenAndRemove]
   - id: 22
     spec: 1
     implementation: |
@@ -206,8 +207,9 @@ tasks:
       讀不了（例：沒有權限、是一個目錄）：hosts 檔不是 hostu 自己的東西，不問 MOVE ASIDE；開 error popup「CAN'T READ: <路徑>」與原因，App Log 記進去（footer 的 ! 提醒有錯誤），hostu 照常開著，statusbar 寫 (can't read)（task 7）
     test: [TestHostsFileCantBeRead]
   - id: 26
-    spec: 3
+    spec: 11
     implementation: |
+      讀不了：YAML 本身壞了、config.yaml 不是 key 與值的 mapping、profiles.yaml 的結構跟 hostu 寫的不一樣（例：profiles 不是清單）；讀得進來、只是值或某一筆不合規則的照 task 31
       啟動時 config.yaml 或 profiles.yaml 讀不了：開 terminu-go 的 MOVE ASIDE confirm（App.MoveAside），一次一個、先 config.yaml
       內容兩列：「<路徑> can't be read:」、原因（不帶「yaml: 」、在一列，值的種類不對時用使用者的話說）
       問句寫實際會用的名字：「Move it to profiles.yaml.bak and start fresh?」，.bak 已經有了就寫 .bak.1（.bak.2…）；hint Enter:move Esc:quit
@@ -237,18 +239,43 @@ tasks:
       docs/icon.svg 是 kamonu 匯出的 ~/.kamonu/data/svg/hostu.svg 原樣複製，internal/ui/icon.svg 是它的副本（go:embed）；viewBox 250 × 250、一格一個 10 × 10 的 rect、格子在 x 10–230、y 30–210，<!-- U --> 的 rect 跟 tdp 的 principle/icon.svg 一樣，接著 <!-- H -->、<!-- O -->、<!-- S -->、<!-- T --> 都是 #f2b753
     test: [TestSplashIsDocsIcon]
   - id: 30
-    spec: 9
+    spec: 11
     implementation: |
-      install.sh、uninstall.sh、.goreleaser.yaml、.github/workflows/release.yml、internal/version/version.go 照 tdp v1.1.0 的範本，只差範本允許的地方：install.sh 的 WINDOWS="yes" 與 app's own 段落多一句寫 hosts 檔要 sudo（或 doas）；uninstall.sh 的 app's own 段落寫 hosts 檔留在 hostu 最後寫的樣子；.goreleaser.yaml 打開 Windows 與 scoops（vulcanshen/scoop-bucket），description 與 caveats 寫 hostu 的；release.yml 的測試加 windows-latest
+      README 的安裝方式：Homebrew、Scoop、安裝腳本（install.sh、install.ps1），不寫 go install；「更新與移除」一節先寫 hostu update 各種安裝方式會做什麼，再寫移除
+      install.sh、uninstall.sh、.goreleaser.yaml、.github/workflows/release.yml、internal/version/version.go、family.mk、.gitignore 照 harness v1.2.13 的範本（開頭的註解寫 harness project/…），只差範本允許的地方：install.sh 的 WINDOWS="yes" 與 app's own 段落多一句寫 hosts 檔要 sudo（或 doas）；uninstall.sh 的 app's own 段落寫 hosts 檔留在 hostu 最後寫的樣子；.goreleaser.yaml 打開 Windows 與 scoops（vulcanshen/scoop-bucket），description 與 caveats 寫 hostu 的；release.yml 的測試加 windows-latest
       .goreleaser.yaml 的 release.prerelease: auto，brews 與 scoops 都是 skip_upload: auto：tag 帶 -beta.N 時發成 GitHub pre-release，不寫 tap 與 bucket
       .goreleaser.yaml 的 ldflags 用 {{ .ModulePath }}/internal/version.Version 注入版本，module 路徑取 go.mod 的 github.com/vulcanshen/hostu（v1，不帶 /vN）；tdptest 的 Check 在最新的 release 是 v2 以上而 module 沒帶 /vN 時失敗（project-13）
       release.yml 把 CHANGELOG 那一段寫到 $RUNNER_TEMP/RELEASE_NOTES.md，goreleaser 不帶 --skip=validate，再用同一個檔蓋過 release 的內文
       family.mk 照範本原樣複製（含 dev target），不改
       移除腳本照範本，設定與資料目錄（~/.hostu 裡有 profiles.yaml 與 hosts.original）各問一次才刪；不動 hosts 檔
       install.ps1 裝到 %LOCALAPPDATA%\hostu；uninstall.ps1 刪執行檔，設定與資料目錄各問一次（y/N）才刪，最後說 hosts 檔留在 hostu 最後寫的樣子
-      tdptest 的 Check 在子測試 repo 拿 terminu-go 帶的 tdp 範本比對這些檔、project.3 的檔、Makefile 與 CHANGELOG，只容許範本允許改的地方
-      .gitignore 照 tdp v1.1.0 的範本，沒有 hostu 自己加的行；git 只追蹤 .claude/rules/terminu.md，CLAUDE.md 與 .claude/ 其他的檔留在本機；tdptest 的 Check 在 git 追蹤了別的 Claude Code 檔案時失敗（project-37）
+      harness 的 check 拿 harness 的範本比對這些檔、project.3 的檔、Makefile 與 CHANGELOG，只容許範本允許改的地方
+      .gitignore 沒有 hostu 自己加的行；git 只追蹤 .claude/rules/terminu.md，CLAUDE.md 與 .claude/ 其他的檔留在本機（project-37）
     test:
-      - TestTDP
+      - check: repo
       - commit: 8c5b006
       - commit: e0dd1cd
+  - id: 31
+    spec: 11
+    implementation: |
+      config.Load 把 config.yaml 讀成 yaml.Node：input_tab_width 解不成整數、或小於 1，是一個 Misfit{input_tab_width, 原本寫的（清單、mapping 寫 a list、a mapping）, 4}，這次用 4
+      profile.Load 讀進來後拿掉 hostu 不會寫出的那一筆，回傳每一筆的說法：profile <N> (name "<名稱>")、profile <N> (name "<名稱>" again)、domain "<domain>" in the profile <名稱>、domain <domain> in the profile <名稱> again、address "<位址>" of <domain> in the profile <名稱>、domain <domain> in the profile <名稱>, with no address
+      有不合規則的：terminu.KeepAside 複製成 .bak（已經有就 .bak.1…），成功才重寫（config.Fix 只換掉那幾個值，其他照原樣、key 與註解都留著、權限不變；profiles.yaml 用 Store.Save），notice 是 terminu.MisfitNotice(路徑, 備份, …)：Warning「1 value in config.yaml did not fit: defaults used, yours kept in config.yaml.bak」「2 entries in profiles.yaml did not fit: taken out, yours kept in profiles.yaml.bak」，App Log 每一筆一個 WARN（「profiles.yaml: <那一筆> did not fit; taken out」「config.yaml: input_tab_width "0" did not fit; using "4"」）
+      備份做不出來：不重寫，這一次用合規則的部分；notice 是 Error「<檔名>.bak could not be made: <原因>; <檔名> left as it was」，再接沒有那一行的 MisfitNotice（只記 WARN）；重寫失敗時多一個 Error「<檔名> could not be written again: <原因>」
+      啟動時（MOVE ASIDE 都問完之後）先 App.Notify 這些 notice（config.yaml 的在前，接著 profiles.yaml 的、task 33 的），再讀 hosts 檔
+    test: [TestLoadMisfitsAndKeysNotRead, TestFix, TestLoadTakesOutWhatDoesNotFit, TestMisfitsKeptAside, TestMisfitCopyCantBeMade]
+  - id: 32
+    spec: 11
+    implementation: |
+      config.Load 把 input_tab_width 以外的 key 列出來；每次啟動 App.Log(Info, "Not read: <key> in <config.yaml 路徑，家目錄寫 ~>; delete it if you don't need it")
+      config.Fix 重寫時這些 key 照原樣留著
+    test: [TestLoadMisfitsAndKeysNotRead, TestFix, TestMisfitsKeptAside]
+  - id: 33
+    spec: 11
+    implementation: |
+      profile.Load 不檢查 active；Store.ActiveGone 是 active 有寫、卻沒有那個名字的 profile
+      啟動時 notice 是 Warning「Active profile "<active>" is not in profiles.yaml: no profile is active」（名字用 %q 寫，控制字元寫成跳脫的樣子）
+      store.Active 照原本寫的留著，之後存 profiles.yaml 也照寫；沒有 profile 有勾，生效中的不能刪那一條管不到任何 profile，statusbar 的狀態空白
+      statusbar：「active: 」這幾個字 Red，值照原本寫的、Lavender
+      啟用別的 profile 時 active 換成它；建一個同名的 profile，它就是生效中的
+    test: [TestActiveGone, TestActiveProfileGone]

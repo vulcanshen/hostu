@@ -74,19 +74,20 @@ curl -fsSL https://raw.githubusercontent.com/vulcanshen/hostu/main/install.sh | 
 irm https://raw.githubusercontent.com/vulcanshen/hostu/main/install.ps1 | iex
 ```
 
-### Go
-
-```sh
-go install github.com/vulcanshen/hostu/cmd/hostu@latest
-```
-
 ### 第一次啟動
 
 hostu 把 hosts 檔讀成叫 `default` 的 profile，標成生效中（hosts 檔就是它），存進 `profiles.yaml`。啟用 profile 之前不會寫 hosts 檔。
 
 ### 更新與移除
 
-更新：用同樣的方式再裝一次。移除：
+照當初安裝的方式，更新到最新的正式版：
+
+```sh
+hostu update
+```
+
+用 Homebrew 裝的，它會執行 `brew upgrade vulcanshen/tap/hostu`；用安裝腳本裝的或從 release 下載的，它直接換成新版；用 Scoop
+裝的，它印出要執行的 `scoop update hostu`。它不會要 sudo：沒有權限寫入的地方，它會說該怎麼做。移除：
 
 ```sh
 brew uninstall hostu
@@ -142,11 +143,11 @@ hostu 自己的：
 | `Enter` | `[1] PROFILES` | 啟用這個 profile：先問，再寫進 hosts 檔 |
 | `p` | `[1] PROFILES` | 預覽這個 profile 會寫成的 hosts 檔 |
 | `r`、`c` | `[1] PROFILES` | 改名；複製成一個新的 profile |
-| `D` | `[1] PROFILES` | 刪掉這個 profile，先問（生效中的不能刪） |
+| `x` | `[1] PROFILES` | 刪掉這個 profile，先問（生效中的不能刪） |
 | `n` | `[1] PROFILES` | 新增一個空的 profile |
-| `i` | `[1] PROFILES` | 把 hosts 檔現在的內容讀成一個新的 profile |
+| `I` | `[1] PROFILES` | 把 hosts 檔現在的內容讀成一個新的 profile |
 | `Enter` | `[2] DOMAINS` | 編輯這個 domain 與它的位址 |
-| `D` | `[2] DOMAINS` | 刪掉這個 domain，先問 |
+| `x` | `[2] DOMAINS` | 刪掉這個 domain，先問 |
 | `n` | `[2] DOMAINS` | 新增 domain：NEW DOMAIN 表單 |
 
 表單的 Addresses 可以一次打好幾個位址，用空白隔開：`10.1.2.3 fd00::3`。
@@ -170,6 +171,11 @@ Windows 上的 `~` 是 `%USERPROFILE%`。`config.yaml` 只有一個設定，term
 
 `config.yaml` 或 `profiles.yaml` 讀不了時（例如手改壞了），hostu 一開始就先問：`Enter` 把它改名成 `.bak`，像第一次打開
 一樣開始，`Esc` 離開，印出是哪個檔、哪裡不對。
+
+讀得進來、只是有 hostu 用不了的東西時（`input_tab_width` 小於 1、profile 的名稱有控制字元或重複、不是位址的位址），hostu
+先把檔案複製成 `.bak`，再重寫檔案：那個值換成預設值，那一筆拿掉，並跳出提示；App Log（`!`）會一筆一筆列出來。`config.yaml`
+裡 hostu 不讀的 key 會留著，每次啟動在 App Log 記一筆。`active` 指的 profile 不在 `profiles.yaml` 裡時，照原本寫的留著：
+在它回來、或你啟用別的 profile 之前，沒有生效中的 profile，statusbar 的 label 畫成紅色。
 
 ## 限制
 

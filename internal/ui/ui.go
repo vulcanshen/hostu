@@ -59,6 +59,9 @@ type hostu struct {
 	profiles, domains *terminu.List
 	pp, dp            *terminu.Panel
 	unread            []unread // to ask about once the program runs
+	// notices are what the start has to say about hostu's own files, told
+	// once it begins (tdp E3).
+	notices []terminu.Notice
 }
 
 // unread is a file of hostu's own it could not read, and fresh what hostu
@@ -88,13 +91,26 @@ func newHostu(env Env) *hostu {
 	// again with the right space for it.
 	h.a.OnResize = func(int, int) tea.Cmd { h.refresh(); return nil }
 
-	cfg, err := config.Load(env.Config)
+	cfg, misfits, notRead, err := config.Load(env.Config)
+	path := config.Path(env.Config)
 	if err != nil {
 		// Moved aside there is none, as the first time: hostu has the
 		// defaults already and writes no config.yaml.
-		h.unread = append(h.unread, unread{config.Path(env.Config), err, func() tea.Cmd { return nil }})
+		h.unread = append(h.unread, unread{path, err, func() tea.Cmd { return nil }})
 	}
 	h.a.InputTabWidth = cfg.InputTabWidth
+	// A key hostu doesn't read stays in the file, told at every start: hostu
+	// never read any other (tdp E3).
+	for _, key := range notRead {
+		h.a.Log(terminu.Info, "Not read: "+key+" in "+short(path)+"; delete it if you don't need it")
+	}
+	if len(misfits) > 0 {
+		fits := make([]terminu.Misfit, len(misfits))
+		for i, m := range misfits {
+			fits[i] = terminu.Misfit(m)
+		}
+		h.notices = append(h.notices, keepAside(path, func() error { return config.Fix(env.Config, misfits) }, fits)...)
+	}
 	h.load()
 
 	// The active profile's flag goes in the mark column: NAME stands over the
@@ -103,7 +119,7 @@ func newHostu(env Env) *hostu {
 		Columns:   []terminu.Column{{Title: "Name", Shrink: true}, {Title: "Domains", Number: true, Drop: 1}},
 		Flags:     true,
 		EmptyFact: "No profiles yet",
-		EmptyHint: "Press [n] to make one, [i] to read the hosts file into one, or [Space] to see what you can do here",
+		EmptyHint: "Press [n] to make one, [I] to read the hosts file into one, or [Space] to see what you can do here",
 		OnMove:    func(terminu.Row) tea.Cmd { h.showDomains(); return nil },
 	}
 	h.domains = &terminu.List{Columns: []terminu.Column{{Title: "Domain", Shrink: true}, {Title: "Addresses", Shrink: true, Drop: 1}}}
@@ -128,20 +144,60 @@ func splash() terminu.Splash {
 }
 
 // load reads profiles.yaml. One that can't be read is asked about (tdp E3),
-// and once it is moved aside there is none: the first start.
+// and once it is moved aside there is none: the first start. What of it
+// doesn't fit is taken out, the file kept aside and written again without
+// it; an active profile that is not there stays as written, none active for
+// now (tdp E3).
 func (h *hostu) load() {
-	s, found, err := profile.Load(h.env.Data)
+	s, found, out, err := profile.Load(h.env.Data)
 	h.store, h.first = s, !found
 	if err != nil {
 		h.unread = append(h.unread, unread{s.Path(), err, func() tea.Cmd { h.load(); return nil }})
+		return
+	}
+	if len(out) > 0 {
+		fits := make([]terminu.Misfit, len(out))
+		for i, key := range out {
+			fits[i] = terminu.Misfit{Key: key}
+		}
+		h.notices = append(h.notices, keepAside(s.Path(), s.Save, fits)...)
+	}
+	if s.ActiveGone() {
+		h.notices = append(h.notices, terminu.Notice{Kind: terminu.Warning,
+			Text: fmt.Sprintf("Active profile %q is not in %s: no profile is active", s.Active, profile.File)})
 	}
 }
 
-// begin starts hostu once its own files are read, nothing written before:
-// the hosts file is read as it is now. The first time, with no
-// profiles.yaml, it becomes the profile default, the active one; the lines
-// of it that were skipped are told in a Warning toast.
+// keepAside copies the file at path to a .bak and has write write it again
+// without what doesn't fit: the start's notices for it (tdp E3, values that
+// do not fit). When the copy can't be made the file stays as it was, what
+// fits used for this run only.
+func keepAside(path string, write func() error, misfits []terminu.Misfit) []terminu.Notice {
+	copied, err := terminu.KeepAside(path)
+	if err != nil {
+		return []terminu.Notice{{Kind: terminu.Error, Text: err.Error()}, terminu.MisfitNotice(path, "", misfits...)}
+	}
+	ns := []terminu.Notice{terminu.MisfitNotice(path, copied, misfits...)}
+	if err := write(); err != nil {
+		ns = append(ns, terminu.Notice{Kind: terminu.Error,
+			Text: filepath.Base(path) + " could not be written again: " + reason(err).Error()})
+	}
+	return ns
+}
+
+// begin starts hostu once its own files are read, nothing written before
+// but what didn't fit: first what the start has to say about its files
+// (tdp E3), then the hosts file is read as it is now. The first time, with
+// no profiles.yaml, it becomes the profile default, the active one; the
+// lines of it that were skipped are told in a Warning toast.
 func (h *hostu) begin() tea.Cmd {
+	notices := h.a.Notify(h.notices...)
+	h.notices = nil
+	return tea.Batch(notices, h.readFirst())
+}
+
+// readFirst reads the hosts file as begin has it.
+func (h *hostu) readFirst() tea.Cmd {
 	skipped := h.readHosts()
 	defer h.refresh()
 	switch {
@@ -312,8 +368,15 @@ func (h *hostu) status(w int) []terminu.Span {
 	case h.store.Get(h.store.Active) != nil:
 		state = "(in sync)"
 	}
+	// An active profile that is not there is shown as written, its label Red
+	// (tdp E3).
+	label := grey
+	if h.store.ActiveGone() {
+		label = terminu.Fg(terminu.Red)
+	}
 	spans := []terminu.Span{{Text: "hosts: " + path + " ", Style: grey},
-		{Text: terminu.Pad(state, len("(can't read)")), Style: terminu.Fg(colour)}, {Text: "  active: ", Style: grey}}
+		{Text: terminu.Pad(state, len("(can't read)")), Style: terminu.Fg(colour)}, {Text: "  ", Style: grey},
+		{Text: "active: ", Style: label}}
 	if h.store.Active == "" {
 		return append(spans, terminu.Span{Text: "none", Style: grey})
 	}

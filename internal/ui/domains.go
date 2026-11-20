@@ -18,7 +18,7 @@ func (h *hostu) domainActions() []terminu.Action {
 	return []terminu.Action{
 		{Key: "Enter", Label: "Edit", Desc: "the domain and its addresses", Scope: terminu.ItemScope, Hint: "edit",
 			Do: func() tea.Cmd { p, i := h.currentDomain(); return h.domainForm(p, i) }},
-		{Key: "D", Label: "Delete", Desc: "take the domain out of the profile", Scope: terminu.ItemScope,
+		{Key: "x", Label: "Delete", Desc: "take the domain out of the profile", Scope: terminu.ItemScope,
 			AskFor: func() *terminu.Ask {
 				p, i := h.currentDomain()
 				return &terminu.Ask{Title: "Delete", Subject: p.Domains[i].Name, Verb: "delete",

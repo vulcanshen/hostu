@@ -65,7 +65,7 @@ func TestTDPWithTrickyValues(t *testing.T) {
 			if err := os.WriteFile(hostsFile(home), []byte(systemHosts), 0o644); err != nil {
 				panic(err)
 			}
-			s, _, err := profile.Load(filepath.Join(home, ".hostu"))
+			s, _, _, err := profile.Load(filepath.Join(home, ".hostu"))
 			if err != nil {
 				panic(err)
 			}

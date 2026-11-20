@@ -1,6 +1,6 @@
-id: 10
-from: v1.1.0-beta.3
-to: v1.1.0
+id: 11
+from: v1.1.0
+to: v1.2.20
 tasks:
   - id: 1
     spec: 2
@@ -35,9 +35,13 @@ tasks:
     remark:
       - 量與讀環境變數由 terminu-go 做（tdp E8）；README 的需求段寫明（tdp E4、tdp E7）
   - id: 4
-    spec: 1
-    request: 命令列：`hostu` 啟動，`hostu version`（`-v`、`--version`）印出版本，`hostu help`（`-h`、`--help`）印出命令列的用法
-    tdp: [tdp E1, tdp project.4, tdp E3]
+    spec: 11
+    request: 命令列：`hostu` 啟動，`hostu update` 照當初安裝的方式更新到最新的正式版，`hostu version`（`-v`、`--version`）印出版本，`hostu help`（`-h`、`--help`）印出命令列的用法
+    tdp: [tdp E1, harness project.4, tdp E3, tdp E6, tdp E8, tdp M5]
+    remark:
+      - '印的東西照 tdp E1：結果寫 stdout；錯誤寫 stderr，開頭 `hostu: `；用錯（不認得的指令）寫 `hostu: Unknown command "x"`、空一行、用法，exit 2；做完 0、沒做完 1'
+      - "`update` 每個 app 都一樣，由 terminu-go 的 SelfUpdate 做（tdp E1、E8）：Homebrew 的 tap 是 vulcanshen/tap（tdp E6），從原始碼編的說請在那邊 `git pull && make install`"
+      - "`iconwidth` 是有的 app 才有（tdp E1）：hostu 不提供"
   - id: 5
     spec: 4
     request: "`[1] PROFILES` 列出存著的 profile；一次一個生效，綠色的勾標出 hosts 檔現在是哪一個，勾有自己的欄位，NAME 對著名稱"
@@ -111,11 +115,12 @@ tasks:
     remark:
       - 新增之後 cursor 移到新的那一項（tdp K3）
   - id: 15
-    spec: 3
-    request: 在 `[1] PROFILES` 按 `D` 刪掉這個 profile，先問；生效中的不能刪
-    tdp: [tdp P5, tdp M5, tdp K12, tdp F6, tdp confirm, tdp M6, tdp T1, tdp note.6, tdp note.7, tdp F4, tdp popup.1, tdp F5, tdp toast.1]
+    spec: 11
+    request: 在 `[1] PROFILES` 按 `x` 刪掉這個 profile，先問；生效中的不能刪
+    tdp: [tdp P5, tdp M5, tdp K12, tdp F6, tdp confirm, tdp M6, tdp T1, tdp note.6, tdp note.7, tdp F4, tdp popup.1, tdp F5, tdp toast.1, tdp K13]
     remark:
       - 生效中的 profile 上，刪除照停用畫（tdp M6：對象存在、但現在不能執行）
+      - 刪除在 `x`，全家族一樣，不用 `D`（tdp K13）
   - id: 16
     spec: 3
     request: 在 `[1] PROFILES` 按 `n` 新增一個空的 profile
@@ -123,11 +128,13 @@ tasks:
     remark:
       - 新增之後 cursor 移到新的那一項（tdp K3）
   - id: 17
-    spec: 3
-    request: 在 `[1] PROFILES` 按 `i` 把 hosts 檔現在的內容讀成一個新的 profile
-    tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp toast.2, tdp input.2, tdp input.6, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9, tdp popup.1, tdp input.1]
+    spec: 11
+    request: 在 `[1] PROFILES` 按 `I` 把 hosts 檔現在的內容讀成一個新的 profile
+    tdp: [tdp P5, tdp M5, tdp K12, tdp K3, tdp toast.2, tdp input.2, tdp input.6, tdp text, tdp popup.7, tdp note.6, tdp note.7, tdp input.8, tdp input.9, tdp popup.1, tdp input.1, tdp K13]
     remark:
       - 有跳過的行時用 Warning toast 說跳過了幾行（tdp toast.2）；新增之後 cursor 移到新的那一項（tdp K3）
+      - "`i` 是全家族打開項目附註的鍵，其他動作都不用（tdp main 的 K13、panel.18，v1.2.20 之後還沒發版）：匯入在 `I`"
+      - "[1] 與 [2] 都沒有 panel filter（tdp panel.14 要不要有由 app 決定），新增之後移 cursor 不用先清篩選" 
   - id: 18
     spec: 3
     request: 在 `[2] DOMAINS` 按 `n` 新增 domain：NEW DOMAIN 表單，一個 domain 一筆；Addresses 可以一次打好幾個位址，用空白隔開（`10.1.2.3 fd00::3`）；名稱與位址打錯當場就擋下來
@@ -142,15 +149,18 @@ tasks:
     remark:
       - domain 上最直觀的事是編輯（tdp K3）；表單的標題帶它的名字（tdp form.3）
   - id: 20
-    spec: 3
-    request: 在 `[2] DOMAINS` 按 `D` 刪掉這個 domain，先問
-    tdp: [tdp P5, tdp M5, tdp K12, tdp F6, tdp confirm, tdp T1, tdp note.6, tdp note.7, tdp F4, tdp popup.1, tdp F5, tdp toast.1]
+    spec: 11
+    request: 在 `[2] DOMAINS` 按 `x` 刪掉這個 domain，先問
+    tdp: [tdp P5, tdp M5, tdp K12, tdp F6, tdp confirm, tdp T1, tdp note.6, tdp note.7, tdp F4, tdp popup.1, tdp F5, tdp toast.1, tdp K13]
+    remark:
+      - 刪除在 `x`，全家族一樣，不用 `D`（tdp K13）
   - id: 21
-    spec: 1
+    spec: 11
     request: profile 存在 `~/.hostu/profiles.yaml`（`HOSTU__DATA` 改位置），是 hostu 自己的格式，每改一次就存一次；改 profile 只改這個檔
     tdp: [tdp E3, tdp E2, tdp P5]
     remark:
       - 使用者寫給 app 用的清單是資料（tdp E3）；檔案格式是功能邏輯（tdp P5）
+      - 手改進來的不合規則的一筆不再讓整個檔讀不了，拿掉那一筆（task 31）；`active` 指到不在的 profile 照原本寫的留著（task 33）
   - id: 22
     spec: 1
     request: 設定 `config.yaml` 在 `$XDG_CONFIG_HOME/hostu`（沒設就是 `~/.config/hostu`，`HOSTU__CONFIG` 改位置），只有一個設定，家族共用的 `input_tab_width`：hostu 顯示的文字裡 Tab 畫成幾格空白，預設 4
@@ -172,9 +182,12 @@ tasks:
     remark:
       - hosts 檔是 app 外面的東西：讀不到時 app 照常開著（tdp E3 的「讀不了時」）。E3 的「照 panel.15 寫」管的是畫在某個 panel 上的東西，hosts 檔不在任何 panel 上，剩下 tdp F5：錯誤立刻看得到、記進 App Log；啟動時的讀取不是 toast.1 寫到的兩種失敗，用 toast 還是 error popup app 可以自行決定（terminu 2026-10-26 判）
   - id: 26
-    spec: 3
+    spec: 11
     request: "`config.yaml` 或 `profiles.yaml` 讀不了時（例如手改壞了），hostu 一開始就先問：`Enter` 把它改名成 `.bak`，像第一次打開一樣開始，`Esc` 離開，印出是哪個檔、哪裡不對"
-    tdp: [tdp E3, tdp confirm, tdp confirm.3, tdp note.7, tdp components.5]
+    tdp: [tdp E3, tdp confirm, tdp confirm.3, tdp note.7, tdp components.5, tdp E1]
+    remark:
+      - 讀不了是 YAML 本身壞了、或結構不對（例：profiles 不是清單）；讀得進來、只是值或某一筆不合規則的不算，照 task 31（tdp E3）
+      - hostu 沒有不開畫面就讀這兩個檔的指令，也沒有 TUI 以外的畫面：tdp E3 的「沒有畫面時」與「TUI 以外」管不到
   - id: 27
     spec: 3
     request: 按 `!` 打開 App Log：這次打開以來 hostu 做了什麼、哪裡出了問題
@@ -193,12 +206,35 @@ tasks:
       - README 沒寫：splash 不揭露（tdp S2）。這個 task 是從測試 TestSplashIsDocsIcon 來的
       - mark 是使用者 2026-10-29 用 kamonu 畫的：金色的 H 撐滿框裡，上半格是 O、O 裡一個 T，下半格是 S；hostu 的 u 就是家族的 U 框，跟 kbu 的 K、B，locku 的 L、O、C、K 一樣（tdp S5）。註解的順序 U、H、O、S、T 就是揭露的順序
   - id: 30
-    spec: 9
-    request: 安裝：Homebrew、Scoop（Windows）、安裝腳本（不用 sudo，裝到 `~/.local/bin`；Windows 在 PowerShell 裡）、`go install`。移除：Homebrew 或移除腳本，刪 profile 與舊 hosts 檔的副本之前先問；移除 hostu 不動 hosts 檔
-    tdp: [tdp E6, tdp project.2, tdp project.3, tdp project.7, tdp project.5, tdp project.6, tdp project-37, tdp project-34, tdp project-38, tdp project-39, tdp project-13, tdp project.4]
+    spec: 11
+    request: 安裝：Homebrew、Scoop（Windows）、安裝腳本（不用 sudo，裝到 `~/.local/bin`；Windows 在 PowerShell 裡），或從 GitHub release 下載；更新用 `hostu update`（task 4）。移除：Homebrew 或移除腳本，刪 profile 與舊 hosts 檔的副本之前先問；移除 hostu 不動 hosts 檔
+    tdp: [tdp E6, tdp E7, harness project.2, harness project.3, harness project.7, harness project.5, harness project.6, harness project-37, harness project-34, harness project-38, harness project-39, harness project-13, harness project.4]
     remark:
-      - install.sh、uninstall.sh 照 tdp project.2 的範本（範本的 app's own 段落 app 自己改）；移除腳本問了才刪資料目錄是範本本來的做法
-      - 出 Windows 版：install.ps1、uninstall.ps1 怎麼寫 app 可以自行決定（tdp project.3），Scoop bucket 照 tdp project.7
-      - Claude Code 的檔案不進 git：.gitignore 照範本排除 CLAUDE.md 與 .claude/，git 只追蹤 harness 的 .claude/rules/terminu.md（tdp project.3、tdp project-37）
-      - beta（tag vX.Y.Z-beta.N）發成 GitHub pre-release，不推 Homebrew tap 與 scoop bucket，brew、scoop、install.sh 拿到的還是正式版；CHANGELOG 的標題是 beta 的 tag（tdp project.6、tdp project.7）。release notes 寫在 checkout 外面，執行檔不帶 +dirty（tdp project.7、tdp project-39）。2026-10-28 第一個 beta 是 v1.0.1-beta.1：畫面與操作沒變，所以升 patch（user 定的，terminu 轉達）
-      - "`go install` 的路徑是 github.com/vulcanshen/hostu/cmd/hostu：hostu 還在 v1，module 不帶 /vN，升到 v2 的那一版才在同一個 commit 加（tdp project.3、tdp project-13）"
+      - install.sh、uninstall.sh 照 harness project.2 的範本（範本的 app's own 段落 app 自己改）；移除腳本問了才刪資料目錄是範本本來的做法
+      - 出 Windows 版：install.ps1、uninstall.ps1 怎麼寫 app 可以自行決定（harness project.3），Scoop bucket 照 harness project.7
+      - Claude Code 的檔案不進 git：.gitignore 照範本排除 CLAUDE.md 與 .claude/，git 只追蹤 harness 的 .claude/rules/terminu.md（harness project.3、harness project-37）
+      - beta（tag vX.Y.Z-beta.N）發成 GitHub pre-release，不推 Homebrew tap 與 scoop bucket，brew、scoop、install.sh 拿到的還是正式版；CHANGELOG 的標題是 beta 的 tag（harness project.6、harness project.7）。release notes 寫在 checkout 外面，執行檔不帶 +dirty（harness project.7、harness project-39）。2026-10-28 第一個 beta 是 v1.0.1-beta.1：畫面與操作沒變，所以升 patch（user 定的，terminu 轉達）
+      - module 是 github.com/vulcanshen/hostu：hostu 還在 v1，不帶 /vN，升到 v2 的那一版才在同一個 commit 加（harness project.3、harness project-13）
+      - 家族不提供 `go install`，README 也不寫：那樣建出來的沒有注入版本（harness project.7，user 2026-11-04）
+      - README 的「安裝」段寫更新（tdp E7：更新放進「安裝」，跟移除放在一起）
+  - id: 31
+    spec: 11
+    request: "`config.yaml`、`profiles.yaml` 讀得進來、只是有 hostu 用不了的值或不合規則的一筆時（`input_tab_width` 小於 1、profile 名稱有控制字元或重複、不是 domain 的 domain、不是位址的位址），hostu 照常開始：先把檔案複製成 `.bak`，再用預設值重寫、拿掉那一筆，跳提示，App Log 一筆一筆記"
+    tdp: [tdp E3, tdp toast.2, tdp note.7, tdp P5, tdp components.5]
+    remark:
+      - 哪些算不合規則是功能邏輯（tdp P5）：config.yaml 的 input_tab_width 不是 1 以上的整數；profiles.yaml 裡 hostu 自己不會寫出的（名稱空白、前後有空白、有控制字元、跟前面的重複；不是 domain、在同一個 profile 重複、沒有位址的 domain；不是 IPv4 或 IPv6 的位址）。一筆是一個 profile、一個 domain 或一個位址，拿掉最小的那一筆，domain 的位址拿光了才拿掉 domain
+      - 備份做不出來時不重寫檔案，這一次用合規則的部分，跳 Error（tdp E3）
+      - 啟動時這幾件連同 task 33 收成 notice，照發生的順序交給 terminu-go 的 App.Notify（tdp E3「同一次啟動有好幾件」；tdp main 改成每一件一個 toast、往上疊，由 terminu-go 做）
+  - id: 32
+    spec: 11
+    request: "`config.yaml` 裡 hostu 不讀的 key（例：打錯字）留在檔裡，重寫時也留著；每次啟動在 App Log 記一筆"
+    tdp: [tdp E3, tdp note.7]
+    remark:
+      - hostu 從來只讀 input_tab_width，分不出哪個 key 是以前讀過的，一律寫 `Not read`（tdp E3）
+  - id: 33
+    spec: 11
+    request: "`profiles.yaml` 的 `active` 指到不在的 profile 時（手改過），檔案不動、值留著：這一次沒有生效中的 profile，跳 Warning；statusbar 照原本寫的顯示，`active:` 畫成紅色；那個 profile 回來就又生效，啟用別的 profile 才改掉它"
+    tdp: [tdp E3, tdp screen.4, tdp toast.2, tdp note.7, tdp L2, tdp color.2]
+    remark:
+      - "`active` 指的是使用者自己資料裡的一筆：不算值不合規則，不備份、不重寫（tdp E3「指到不在的一筆」）；內建的預設是沒有生效中的 profile"
+      - statusbar 沒有 label 與值分開的 panel：`active:` 這幾個字就是它的 label，畫 Red；值照原本寫的，外面來的字由 terminu-go 畫（tdp components.5）

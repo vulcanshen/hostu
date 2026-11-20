@@ -2,6 +2,21 @@
 
 Each release names the version of terminu design (tdp) it follows.
 
+## Unreleased
+
+- On terminu-go v1.2.22-beta.2 (tdp v1.2.20).
+- Delete is on `x` in both panels, no longer `D`, and Import on `I`, no longer `i`: every terminu app deletes with `x`,
+  `D` being the Diff mode's key and `i` opening an item's note.
+- `hostu update` brings hostu to its latest release the way it was installed: Homebrew upgrades it, an install by the
+  script or from the releases is replaced, and with Scoop it prints the command to run. It never asks for sudo.
+- An unknown command says `hostu: Unknown command "x"`, then the usage; `version` and `help` print on stdout.
+- A `config.yaml` or `profiles.yaml` that can be read but has something hostu can't use no longer stops hostu at the
+  start: it keeps a copy as `.bak`, writes the file again with the default in place of the value or without the entry,
+  and says so, each one in the App Log. A key in `config.yaml` that hostu doesn't read stays, told in the App Log at
+  every start. An active profile that is not in `profiles.yaml` is left as written: none is active for now, and the
+  statusbar shows its label in red.
+- The README no longer offers `go install`: hostu built that way has no version in it.
+
 ## v1.0.2 — tdp v1.1.0
 
 - A new family mark in `docs/icon.svg` and the splash (`V`): a gold H fills the frame, an O with a T in it above its

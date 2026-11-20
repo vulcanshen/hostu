@@ -28,8 +28,8 @@ func (h *hostu) profileActions() []terminu.Action {
 		{Key: "c", Label: "copy", Desc: "a new profile with its domains", Scope: terminu.ItemScope,
 			Do: func() tea.Cmd { return h.copyProfile(h.current()) }},
 		// The active profile is in the hosts file: another is activated
-		// before it goes (tdp M6).
-		{Key: "D", Label: "Delete", Desc: "take it away, with its domains", Scope: terminu.ItemScope,
+		// before it goes (tdp M6). x is the family's delete (tdp K13).
+		{Key: "x", Label: "Delete", Desc: "take it away, with its domains", Scope: terminu.ItemScope,
 			Disabled: func() bool { p := h.current(); return p != nil && p.Name == h.store.Active },
 			AskFor: func() *terminu.Ask {
 				p := h.current()
@@ -39,7 +39,8 @@ func (h *hostu) profileActions() []terminu.Action {
 			},
 			Do: func() tea.Cmd { return h.deleteProfile(h.current()) }},
 		{Key: "n", Label: "new", Desc: "an empty profile", Scope: terminu.PanelScope, Hint: "new", Do: h.newProfile},
-		{Key: "i", Label: "import", Desc: "the hosts file as it is now, as a new profile", Scope: terminu.PanelScope,
+		// i opens an item's note in every app (tdp K13): import is on I.
+		{Key: "I", Label: "import", Desc: "the hosts file as it is now, as a new profile", Scope: terminu.PanelScope,
 			Do: h.importProfile},
 	}
 }

@@ -37,62 +37,78 @@ type Store struct {
 }
 
 // Load reads the store in dir; found is false when it is not there yet. A
-// file that can't be read, or that check finds wrong, gives a store with no
-// profiles and the error: nothing of it is shown or written.
-func Load(dir string) (s *Store, found bool, err error) {
+// file that can't be read gives a store with no profiles and the error:
+// nothing of it is shown or written. One that can is held to what hostu
+// writes itself, out saying what of it was taken out (fit); its active
+// profile is as the file has it, there or not (tdp E3).
+func Load(dir string) (s *Store, found bool, out []string, err error) {
 	path := filepath.Join(dir, File)
 	s = &Store{path: path}
 	b, err := os.ReadFile(path)
 	if errors.Is(err, fs.ErrNotExist) {
-		return s, false, nil
+		return s, false, nil, nil
 	}
 	if err != nil {
-		return s, false, err
+		return s, false, nil, err
 	}
 	if err := yaml.Unmarshal(b, s); err != nil {
-		return &Store{path: path}, true, err
+		return &Store{path: path}, true, nil, err
 	}
 	s.Profiles = slices.DeleteFunc(s.Profiles, func(p *Profile) bool { return p == nil })
-	if err := s.check(); err != nil {
-		return &Store{path: path}, true, err
-	}
-	return s, true, nil
+	return s, true, s.fit(), nil
 }
 
-// check holds a hand-edited file to what hostu itself writes, so that no
-// name it can't show and no line it shouldn't write gets in: names as
-// CheckName has them, each once; domains and addresses a hosts file takes.
-func (s *Store) check() error {
+// fit takes out of a hand-edited store what hostu would not write itself,
+// so that no name it can't show and no line it shouldn't write gets in: a
+// profile not named as CheckName has it, empty or as one before it; a
+// domain a hosts file doesn't take, in its profile twice or with no address
+// left; an address that is not one. out says what each was (tdp E3, entries
+// that do not fit).
+func (s *Store) fit() (out []string) {
+	var kept []*Profile
 	for i, p := range s.Profiles {
-		if err := CheckName(p.Name); err != nil {
-			why := err.Error() // a sentence for the input it is made for
-			return fmt.Errorf("profile %d is named %q: %s", i+1, p.Name, strings.ToLower(why[:1])+why[1:])
+		switch {
+		case p.Name == "" || CheckName(p.Name) != nil:
+			out = append(out, fmt.Sprintf("profile %d (name %q)", i+1, p.Name))
+			continue
+		case slices.ContainsFunc(kept, func(k *Profile) bool { return strings.EqualFold(k.Name, p.Name) }):
+			out = append(out, fmt.Sprintf("profile %d (name %q again)", i+1, p.Name))
+			continue
 		}
-		if s.Taken(p.Name, p) {
-			return fmt.Errorf("two profiles are named %s", p.Name)
-		}
-		for j, d := range p.Domains {
-			if err := hosts.CheckDomain(d.Name); err != nil {
-				return fmt.Errorf("the profile %s has %q, which is not a domain", p.Name, d.Name)
+		var domains []hosts.Domain
+		for _, d := range p.Domains {
+			switch {
+			case hosts.CheckDomain(d.Name) != nil:
+				out = append(out, fmt.Sprintf("domain %q in the profile %s", d.Name, p.Name))
+				continue
+			case hosts.Has(domains, d.Name):
+				out = append(out, fmt.Sprintf("domain %s in the profile %s again", d.Name, p.Name))
+				continue
 			}
-			if hosts.Has(p.Domains[:j], d.Name) {
-				return fmt.Errorf("the profile %s has %s twice", p.Name, d.Name)
-			}
-			if len(d.Addresses) == 0 {
-				return fmt.Errorf("the profile %s has %s with no address", p.Name, d.Name)
-			}
+			var addrs []string
 			for _, a := range d.Addresses {
-				if err := hosts.CheckAddress(a); err != nil {
-					return fmt.Errorf("the profile %s has %q for %s, which is not an IPv4 or IPv6 address", p.Name, a, d.Name)
+				if hosts.CheckAddress(a) != nil {
+					out = append(out, fmt.Sprintf("address %q of %s in the profile %s", a, d.Name, p.Name))
+					continue
 				}
+				addrs = append(addrs, a)
 			}
+			if len(addrs) == 0 {
+				out = append(out, fmt.Sprintf("domain %s in the profile %s, with no address", d.Name, p.Name))
+				continue
+			}
+			domains = append(domains, hosts.Domain{Name: d.Name, Addresses: addrs})
 		}
+		p.Domains = domains
+		kept = append(kept, p)
 	}
-	if s.Active != "" && s.Get(s.Active) == nil {
-		return fmt.Errorf("the active profile %q is not there", s.Active)
-	}
-	return nil
+	s.Profiles = kept
+	return out
 }
+
+// ActiveGone reports that the active profile the store names is not in it
+// (tdp E3, a value naming an entry that is not there).
+func (s *Store) ActiveGone() bool { return s.Active != "" && s.Get(s.Active) == nil }
 
 // CheckName says what is wrong with s as a profile's name: no space at
 // either end, no control character. Empty is the caller's to say.
